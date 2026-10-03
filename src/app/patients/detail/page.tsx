@@ -4,10 +4,11 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Badge, Card, EmptyState, linkButtonClass } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
+import type { Appointment } from "@/features/appointments/types";
 import type { Consultation } from "@/features/consultation/types";
 import { PatientAvatar } from "@/features/patients/PatientAvatar";
 import { patientAge, type Patient } from "@/features/patients/types";
-import { consultationRepo, patientRepo } from "@/lib/repositories";
+import { appointmentRepo, consultationRepo, patientRepo } from "@/lib/repositories";
 
 const Row = ({ k, v }: { k: string; v?: string }) =>
   v ? <div><dt className="text-xs text-muted">{k}</dt><dd className="whitespace-pre-line text-sm">{v}</dd></div> : null;
@@ -16,18 +17,24 @@ function Inner() {
   const id = useSearchParams().get("id");
   const [p, setP] = useState<Patient | null | undefined>(undefined);
   const [history, setHistory] = useState<Consultation[]>([]);
+  const [appts, setAppts] = useState<Appointment[]>([]);
   const canWrite = useCan("patient:write");
   const canConsult = useCan("consultation:write");
 
   useEffect(() => {
     if (!id) return setP(null);
     patientRepo.get(id).then(setP);
+    appointmentRepo.list({ where: { patientId: id } }).then((a) => setAppts(a.filter((x) => x.status !== "done")));
     consultationRepo.list({ where: { patientId: id } }).then((c) => setHistory(c.sort((a, b) => b.date.localeCompare(a.date))));
   }, [id]);
 
   if (p === undefined) return <p className="text-sm text-muted">Loading…</p>;
   if (p === null) return <p className="text-sm text-danger">Patient not found. <Link href="/patients" className="underline">Back to patients</Link></p>;
 
+  const events = [
+    ...history.map((c) => ({ key: c.id, date: c.date, sub: c.rxCode, title: c.diagnosis || c.chiefComplaint || "Consultation", href: `/prescriptions/view?id=${c.id}`, note: c.followUpDate ? `Follow-up: ${c.followUpDate}` : "" })),
+    ...appts.map((a) => ({ key: a.id, date: a.date, sub: `Token ${a.token}`, title: `Appointment (${a.status.replace("_", " ")})`, href: "", note: a.notes })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
   return (
     <div className="space-y-4">
       <Card>
@@ -53,15 +60,15 @@ function Inner() {
         </dl>
       </Card>
       <Card title="History timeline">
-        {history.length === 0 ? (
-          <EmptyState title="No consultations yet" hint="Visits appear here once consultations are recorded." />
+        {events.length === 0 ? (
+          <EmptyState title="No history yet" hint="Consultations and appointments appear here." />
         ) : (
           <ol className="space-y-3 border-l-2 border-border pl-4">
-            {history.map((c) => (
-              <li key={c.id}>
-                <div className="text-xs text-muted">{c.date}{c.rxCode && ` · ${c.rxCode}`}</div>
-                <Link href={`/prescriptions/view?id=${c.id}`} className="text-sm font-medium text-primary underline">{c.diagnosis || c.chiefComplaint || "Consultation"}</Link>
-                {c.followUpDate && <div className="text-xs text-muted">Follow-up: {c.followUpDate}</div>}
+            {events.map((e) => (
+              <li key={e.key}>
+                <div className="text-xs text-muted">{e.date}{e.sub && ` · ${e.sub}`}</div>
+                {e.href ? <Link href={e.href} className="text-sm font-medium text-primary underline">{e.title}</Link> : <div className="text-sm font-medium">{e.title}</div>}
+                {e.note && <div className="text-xs text-muted">{e.note}</div>}
               </li>
             ))}
           </ol>

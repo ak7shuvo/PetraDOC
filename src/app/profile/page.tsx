@@ -4,11 +4,13 @@ import { Button, Card, Input, PhotoField, RepeatableList, Select, Textarea, useT
 import { useCan } from "@/features/auth/RoleProvider";
 import { ChamberManager } from "@/features/doctor-profile/ChamberManager";
 import { PrescriptionHeaderPreview } from "@/features/doctor-profile/PrescriptionHeaderPreview";
-import { listChambers, loadProfile, saveProfile } from "@/features/doctor-profile/service";
+import { addDoctor, doctorLabel, listChambers, listDoctors, loadProfile, saveProfile } from "@/features/doctor-profile/service";
 import { emptyProfile, type Chamber, type DoctorProfile } from "@/features/doctor-profile/types";
 
 export default function ProfilePage() {
   const [p, setP] = useState<DoctorProfile>(emptyProfile());
+  const [doctors, setDoctors] = useState<DoctorProfile[]>([]);
+  const [doctorId, setDoctorId] = useState("");
   const [chambers, setChambers] = useState<Chamber[]>([]);
   const [chamberId, setChamberId] = useState("");
   const [error, setError] = useState("");
@@ -16,8 +18,12 @@ export default function ProfilePage() {
   const canEdit = useCan("profile:edit");
   const toast = useToast();
 
-  const refreshChambers = useCallback(async () => setChambers(await listChambers()), []);
-  useEffect(() => { Promise.all([loadProfile(), listChambers()]).then(([pr, ch]) => { setP(pr); setChambers(ch); setLoaded(true); }); }, []);
+  const refreshChambers = useCallback(async () => setChambers(await listChambers(doctorId)), [doctorId]);
+  useEffect(() => { listDoctors().then((d) => { setDoctors(d); setDoctorId((id) => id || d[0].id); }); }, []);
+  useEffect(() => {
+    if (!doctorId) return;
+    Promise.all([loadProfile(doctorId), listChambers(doctorId)]).then(([pr, ch]) => { setP(pr); setChambers(ch); setChamberId(""); setLoaded(true); });
+  }, [doctorId]);
 
   const set = <K extends keyof DoctorProfile>(k: K, v: DoctorProfile[K]) => setP((s) => ({ ...s, [k]: v }));
   const text = (k: keyof DoctorProfile, label: string, extra: object = {}) => (
@@ -29,6 +35,7 @@ export default function ProfilePage() {
     if (!p.name.trim()) return setError("Name is required");
     setError("");
     setP(await saveProfile(p));
+    setDoctors(await listDoctors());
     toast("Profile saved");
   };
 
@@ -36,6 +43,12 @@ export default function ProfilePage() {
   return (
     <div className="space-y-4">
       <h1 className="font-display text-2xl font-bold">Doctor Profile</h1>
+      <div className="flex flex-wrap items-end gap-2">
+        <Select label="Doctor" placeholder="Choose doctor" options={doctors.map((d) => doctorLabel(d))}
+          value={doctors.find((d) => d.id === doctorId) ? doctorLabel(doctors.find((d) => d.id === doctorId)!) : ""}
+          onChange={(e) => { const d = doctors.find((x) => doctorLabel(x) === e.target.value); if (d) setDoctorId(d.id); }} />
+        {canEdit && <Button variant="secondary" onClick={async () => { const d = await addDoctor(); setDoctors(await listDoctors()); setDoctorId(d.id); toast("Doctor added. Fill in the profile and save."); }}>Add doctor</Button>}
+      </div>
       {!canEdit && <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning">Read-only for the active role. Switch to Doctor or Admin to edit.</p>}
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <fieldset disabled={!canEdit} className="min-w-0 space-y-4">
@@ -96,7 +109,7 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
-      <ChamberManager chambers={chambers} onChanged={refreshChambers} canEdit={canEdit} />
+      <ChamberManager doctorId={doctorId} chambers={chambers} onChanged={refreshChambers} canEdit={canEdit} />
     </div>
   );
 }

@@ -2,12 +2,12 @@
 import { useState } from "react";
 import { Button, Card, EmptyState, Input, Modal, Textarea, useToast } from "@/components/ui";
 import { newId } from "@/lib/repository";
-import { PRIMARY_DOCTOR_ID, type Chamber } from "./types";
+import type { Chamber } from "./types";
 import { removeChamber, saveChamber } from "./service";
 
-const blank = (): Chamber => ({ id: newId(), doctorId: PRIMARY_DOCTOR_ID, name: "", address: "", phone: "", visitingHours: "", fee: "" });
+const blank = (doctorId: string): Chamber => ({ id: newId(), doctorId, name: "", address: "", phone: "", visitingHours: "", fee: "" });
 
-export function ChamberManager({ chambers, onChanged, canEdit }: { chambers: Chamber[]; onChanged: () => void; canEdit: boolean }) {
+export function ChamberManager({ doctorId, chambers, onChanged, canEdit }: { doctorId: string; chambers: Chamber[]; onChanged: () => void; canEdit: boolean }) {
   const [editing, setEditing] = useState<Chamber | null>(null);
   const [err, setErr] = useState("");
   const toast = useToast();
@@ -22,7 +22,7 @@ export function ChamberManager({ chambers, onChanged, canEdit }: { chambers: Cha
   const set = (k: keyof Chamber, v: string) => setEditing((c) => (c ? { ...c, [k]: v } : c));
 
   return (
-    <Card title="Chambers" action={canEdit && <Button onClick={() => { setErr(""); setEditing(blank()); }}>Add chamber</Button>}>
+    <Card title="Chambers" action={canEdit && <Button onClick={() => { setErr(""); setEditing(blank(doctorId)); }}>Add chamber</Button>}>
       {chambers.length === 0 ? (
         <EmptyState title="No chambers yet" hint="Add a chamber to show it on the prescription header." />
       ) : (

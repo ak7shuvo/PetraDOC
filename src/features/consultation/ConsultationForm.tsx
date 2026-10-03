@@ -3,8 +3,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button, Card, Input, Select, Textarea, useToast } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
-import { listChambers } from "@/features/doctor-profile/service";
-import type { Chamber } from "@/features/doctor-profile/types";
+import { doctorLabel, listChambers, listDoctors } from "@/features/doctor-profile/service";
+import type { Chamber, DoctorProfile } from "@/features/doctor-profile/types";
 import { PatientPicker } from "@/features/patients/PatientPicker";
 import { InvestigationEditor } from "./InvestigationEditor";
 import { PrescriptionEditor } from "./PrescriptionEditor";
@@ -26,11 +26,13 @@ export function ConsultationForm({ initial }: { initial: Consultation }) {
   const [c, setC] = useState(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [chambers, setChambers] = useState<Chamber[]>([]);
+  const [doctors, setDoctors] = useState<DoctorProfile[]>([]);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
   const toast = useToast();
   const canWrite = useCan("consultation:write");
 
+  useEffect(() => { listDoctors().then(setDoctors); }, []);
   useEffect(() => { listChambers(c.doctorId).then(setChambers); }, [c.doctorId]);
 
   const set = <K extends keyof Consultation>(k: K, v: Consultation[K]) => setC((s) => ({ ...s, [k]: v }));
@@ -60,6 +62,10 @@ export function ConsultationForm({ initial }: { initial: Consultation }) {
           <PatientPicker value={c.patientId} onChange={(id) => set("patientId", id)} error={errors.patient} />
           <div className="grid gap-3 sm:grid-cols-2">
             <Input label="Visit date *" type="date" value={c.date} error={errors.date} onChange={(e) => set("date", e.target.value)} />
+            {doctors.length > 1 && (
+              <Select label="Doctor" options={doctors.map(doctorLabel)} value={doctorLabel(doctors.find((d) => d.id === c.doctorId) ?? { title: "", name: "" })}
+                onChange={(e) => setC((s) => ({ ...s, doctorId: doctors.find((d) => doctorLabel(d) === e.target.value)?.id ?? s.doctorId, chamberId: "" }))} />
+            )}
             <Select label="Chamber" placeholder="No chamber" options={chambers.map((x) => x.name)}
               value={chambers.find((x) => x.id === c.chamberId)?.name ?? ""}
               onChange={(e) => set("chamberId", chambers.find((x) => x.name === e.target.value)?.id ?? "")} />

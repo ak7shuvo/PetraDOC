@@ -14,6 +14,8 @@
 | 2026-10-03 | 5 | Headless smoke: add medicine+favourite, add via search, manual item, save template, Rx renders w/ footer, copy previous Rx, apply template, Rx list | PASS |
 | 2026-10-03 | 6 | typecheck, build | PASS |
 | 2026-10-03 | 6 | Headless smoke: add tests+category grouping, panel, order panel+search+manual in consultation, appear on Rx | PASS |
+| 2026-10-03 | 7 | typecheck, build | PASS |
+| 2026-10-03 | 7 | Headless smoke: 2 doctors, 2 bookings (tokens 1,2), check-in, start consultation → appointment Done, overdue follow-up listed then booked (token 3), dashboard counts, patient timeline | PASS |
 | 2026-10-03 | 1-3 | Real-device touch/keyboard/a11y review, photo upload via file picker, Android/iOS browsers | NOT RUN |
 
 ## Known issues

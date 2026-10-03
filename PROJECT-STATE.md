@@ -1,7 +1,7 @@
 # PROJECT STATE
 
 ## Current phase
-Phases 1-6 complete. Phase 7 (Appointments, queue, follow-ups, multiple doctors) is next.
+Phases 1-7 complete. Phase 8 (PDF, A4 print, thermal architecture) is next.
 
 ## Completed
 - Scaffold verified: `npm install`, `npm run typecheck`, `npm run build` all pass.
@@ -17,6 +17,7 @@ Phases 1-6 complete. Phase 7 (Appointments, queue, follow-ups, multiple doctors)
 - Phase 4: Consultation (complaint, history, vitals incl. auto BMI, examination, diagnosis, advice, follow-up), auto Prescription ID (RX-000001), local-date handling, prescription view page (A4 document component), patient timeline links to visits. Full `Consultation` model and all Dexie tables (v2) defined up front.
 - Phase 5: Medicine database (generic/brand/strength/form/route/manufacturer, favourites; empty by default, nothing pre-seeded), prescription editor in consultations (search DB, favourites, manual entry, templates, 'Use previous prescription as new'), prescriptions list, prescription footer setting.
 - Phase 6: Investigation database with categories, custom panels, ordering in consultations (search, panel, manual entry, notes), shown on prescription. Empty by default.
+- Phase 7: Appointments with per-doctor/chamber/day token, queue statuses (scheduled → waiting → in consultation → done / cancelled), start-consultation from queue (auto-marks done on save), follow-up tracking (overdue/upcoming, book from follow-up), multiple doctors (profile switcher, per-doctor chambers, doctor filter on dashboard/queue), dashboard counts and patient timeline now include appointments and consultations. Doctors cannot yet be deleted.
 
 ## Remaining
 - Phases 4-10 per master prompt.
