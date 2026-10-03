@@ -4,9 +4,11 @@
 |------|-------|-------|--------|
 | 2026-10-03 | 0 | npm install / typecheck / build on scaffold | PASS |
 | 2026-10-03 | 1 | typecheck, build | PASS |
-| 2026-10-03 | 1 | Manual browser test | NOT RUN (no browser walkthrough yet) |
 | 2026-10-03 | 2 | typecheck, build | PASS |
-| 2026-10-03 | 2 | Manual browser test of profile/chambers | NOT RUN |
+| 2026-10-03 | 2 | Headless Chromium smoke (390px): save profile + education + chamber, reload persists, preview renders | PASS |
+| 2026-10-03 | 3 | typecheck, build | PASS |
+| 2026-10-03 | 3 | Headless smoke: create patient (PD-000001), invalid-mobile blocked, search by name/mobile/ID, empty state, dashboard count | PASS |
+| 2026-10-03 | 1-3 | Real-device touch/keyboard/a11y review, photo upload via file picker, Android/iOS browsers | NOT RUN |
 
 ## Known issues
 - Role gating is UI-only; no authentication (by design until real auth exists).

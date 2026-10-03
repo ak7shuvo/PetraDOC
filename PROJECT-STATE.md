@@ -1,7 +1,7 @@
 # PROJECT STATE
 
 ## Current phase
-Phases 1-2 complete. Phase 3 in progress this session.
+Phases 1-3 complete. Phase 4 (Consultation + vitals) is next; not started.
 
 ## Completed
 - Scaffold verified: `npm install`, `npm run typecheck`, `npm run build` all pass.
@@ -13,12 +13,17 @@ Phases 1-2 complete. Phase 3 in progress this session.
 
 - Phase 2: Doctor Profile (personal, professional, unlimited education/training/experience), multiple Chambers (CRUD), live prescription header preview (profile + selected chamber), photo stored locally. Editing gated to Doctor/Admin roles (UI-only). Single local doctor record (id `primary`); multi-doctor deferred to Phase 7.
 
+- Phase 3: Patients. Create/edit, auto Patient ID (`PD-000001`, max+1), all master-prompt fields, local photo (resized JPEG data URL), search by name/mobile/ID, detail page with history timeline (empty until consultations exist). Pages: `/patients`, `/patients/new`, `/patients/edit?id=`, `/patients/detail?id=`.
+
 ## Remaining
-- Phase 2 (Doctor Profile + Chambers), Phase 3 (Patients), then Phases 4-10 per master prompt.
+- Phases 4-10 per master prompt.
 
 ## Known issues
 - Dashboard "Today's appointments"/"Follow-ups"/"Recent consultations" read real repos but stay 0 until Phases 4/7 create data.
 - IndexedDB is per-browser/device; no backup yet (Phase 9).
+
+- Patient delete is intentionally not implemented (no requirement; avoids orphaned history). Patient ID uses max+1 locally; will need revisiting for multi-device sync.
+- Patient photos are stored inside IndexedDB records; included in future backups.
 
 ## Architecture decisions
 - Web-first Dexie storage; prisma/schema.prisma kept as future server target, NOT wired.
@@ -29,4 +34,4 @@ Phases 1-2 complete. Phase 3 in progress this session.
 - `dexie` — IndexedDB wrapper for the web repository implementation (local-first, no server needed). No form/validation library: validation is small hand-written functions.
 
 ## Next steps
-1. Phase 2, 3, then Phase 4 (Consultation + vitals).
+1. Phase 4 (Consultation + vitals); extend `Consultation` type and make the timeline/dashboard show real data.
