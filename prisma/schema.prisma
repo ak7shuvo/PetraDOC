@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DOCTOR
+  RECEPTIONIST
+  ASSISTANT
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?  @unique
+  role      Role
+  createdAt DateTime @default(now())
+  doctor    Doctor?
+}
+
+model Doctor {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  title         String?
+  specialty     String?
+  // User-provided, NOT externally verified.
+  bmdcNumber    String?
+  phone         String?
+  email         String?
+  photoUrl      String?
+  profile       Json?     // education, training, experience, languages, expertise
+  chambers      Chamber[]
+  consultations Consultation[]
+  appointments  Appointment[]
+}
+
+model Chamber {
+  id           String   @id @default(cuid())
+  doctorId     String
+  doctor       Doctor   @relation(fields: [doctorId], references: [id])
+  name         String
+  address      String?
+  phone        String?
+  visitingHours String?
+  fee          Decimal? @db.Decimal(10, 2)
+  appointments Appointment[]
+}
+
+model Patient {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  photoUrl      String?
+  dob           DateTime?
+  gender        String?
+  mobile        String?
+  address       String?
+  bloodGroup    String?
+  occupation    String?
+  emergencyContact String?
+  allergies     String?
+  medicalHistory String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  consultations Consultation[]
+  appointments  Appointment[]
+  @@index([name])
+  @@index([mobile])
+}
+
+model Consultation {
+  id             String   @id @default(cuid())
+  patientId      String
+  patient        Patient  @relation(fields: [patientId], references: [id])
+  doctorId       String
+  doctor         Doctor   @relation(fields: [doctorId], references: [id])
+  chiefComplaint String?
+  history        String?
+  vitals         Json?    // BP, pulse, temp, SpO2, RR, weight, height, BMI
+  examination    String?
+  diagnosis      String?
+  advice         String?
+  followUpDate   DateTime?
+  followUpNotes  String?
+  createdAt      DateTime @default(now())
+  prescription   Prescription?
+  investigations ConsultationInvestigation[]
+}
+
+model Prescription {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  consultationId String   @unique
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  items          PrescriptionItem[]
+  createdAt      DateTime @default(now())
+}
+
+model PrescriptionItem {
+  id             String   @id @default(cuid())
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+  medicineName   String
+  strength       String?
+  dose           String?
+  frequency      String?
+  route          String?
+  duration       String?
+  instructions   String?
+}
+
+model Medicine {
+  id           String  @id @default(cuid())
+  generic      String
+  brand        String?
+  strength     String?
+  dosageForm   String?
+  route        String?
+  manufacturer String?
+  favourite    Boolean @default(false)
+  @@index([generic])
+  @@index([brand])
+}
+
+model Test {
+  id         String @id @default(cuid())
+  name       String
+  category   String?
+  @@index([name])
+}
+
+model ConsultationInvestigation {
+  id             String @id @default(cuid())
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  name           String
+  notes          String?
+}
+
+model Appointment {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  doctorId  String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+  chamberId String?
+  chamber   Chamber? @relation(fields: [chamberId], references: [id])
+  date      DateTime
+  token     Int?
+  status    String   @default("SCHEDULED")
+  notes     String?
+}
