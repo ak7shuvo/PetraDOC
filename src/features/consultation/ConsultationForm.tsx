@@ -1,11 +1,12 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Card, Input, Select, Textarea, useToast } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
 import { listChambers } from "@/features/doctor-profile/service";
 import type { Chamber } from "@/features/doctor-profile/types";
 import { PatientPicker } from "@/features/patients/PatientPicker";
+import { PrescriptionEditor } from "./PrescriptionEditor";
 import { saveConsultation, validateConsultation } from "./service";
 import type { Consultation, Vitals } from "./types";
 import { computeBmi } from "./vitals";
@@ -20,7 +21,7 @@ const VITALS: [keyof Vitals, string, object][] = [
   ["height", "Height (cm)", { inputMode: "decimal" }],
 ];
 
-export function ConsultationForm({ initial, extra }: { initial: Consultation; extra?: React.ReactNode }) {
+export function ConsultationForm({ initial }: { initial: Consultation }) {
   const [c, setC] = useState(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [chambers, setChambers] = useState<Chamber[]>([]);
@@ -84,7 +85,7 @@ export function ConsultationForm({ initial, extra }: { initial: Consultation; ex
       <Card title="Examination & diagnosis">
         <div className="space-y-3">{area("examination", "Examination")}{area("diagnosis", "Diagnosis / clinical impression")}</div>
       </Card>
-      {extra && <ExtraCtx.Provider value={{ c, set }}>{extra}</ExtraCtx.Provider>}
+      <PrescriptionEditor items={c.medicines} onChange={(v) => set("medicines", v)} patientId={c.patientId} currentId={c.id} />
       <Card title="Advice & follow-up">
         <div className="space-y-3">
           {area("advice", "Advice")}
@@ -102,6 +103,3 @@ export function ConsultationForm({ initial, extra }: { initial: Consultation; ex
     </form>
   );
 }
-
-export const ExtraCtx = createContext<{ c: Consultation; set: <K extends keyof Consultation>(k: K, v: Consultation[K]) => void } | null>(null);
-export const useConsultationDraft = () => useContext(ExtraCtx)!;

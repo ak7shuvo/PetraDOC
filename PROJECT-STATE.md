@@ -1,7 +1,7 @@
 # PROJECT STATE
 
 ## Current phase
-Phases 1-4 complete. Phase 5 (Medicines + prescription) is next.
+Phases 1-5 complete. Phase 6 (Investigations + tests) is next.
 
 ## Completed
 - Scaffold verified: `npm install`, `npm run typecheck`, `npm run build` all pass.
@@ -15,6 +15,7 @@ Phases 1-4 complete. Phase 5 (Medicines + prescription) is next.
 
 - Phase 3: Patients. Create/edit, auto Patient ID (`PD-000001`, max+1), all master-prompt fields, local photo (resized JPEG data URL), search by name/mobile/ID, detail page with history timeline (empty until consultations exist). Pages: `/patients`, `/patients/new`, `/patients/edit?id=`, `/patients/detail?id=`.
 - Phase 4: Consultation (complaint, history, vitals incl. auto BMI, examination, diagnosis, advice, follow-up), auto Prescription ID (RX-000001), local-date handling, prescription view page (A4 document component), patient timeline links to visits. Full `Consultation` model and all Dexie tables (v2) defined up front.
+- Phase 5: Medicine database (generic/brand/strength/form/route/manufacturer, favourites; empty by default, nothing pre-seeded), prescription editor in consultations (search DB, favourites, manual entry, templates, 'Use previous prescription as new'), prescriptions list, prescription footer setting.
 
 ## Remaining
 - Phases 4-10 per master prompt.

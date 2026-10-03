@@ -10,6 +10,8 @@
 | 2026-10-03 | 3 | Headless smoke: create patient (PD-000001), invalid-mobile blocked, search by name/mobile/ID, empty state, dashboard count | PASS |
 | 2026-10-03 | 4 | typecheck, build | PASS |
 | 2026-10-03 | 4 | Headless smoke: create consultation from patient page, BMI 22.9, Rx page renders, dashboard counts + patient timeline update | PASS |
+| 2026-10-03 | 5 | typecheck, build | PASS |
+| 2026-10-03 | 5 | Headless smoke: add medicine+favourite, add via search, manual item, save template, Rx renders w/ footer, copy previous Rx, apply template, Rx list | PASS |
 | 2026-10-03 | 1-3 | Real-device touch/keyboard/a11y review, photo upload via file picker, Android/iOS browsers | NOT RUN |
 
 ## Known issues
