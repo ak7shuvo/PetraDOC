@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Badge, Card, EmptyState, linkButtonClass } from "@/components/ui";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Badge, Button, Card, EmptyState, Modal, linkButtonClass, useToast } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
 import type { Appointment } from "@/features/appointments/types";
 import type { Consultation } from "@/features/consultation/types";
+import { deletePatient } from "@/features/patients/service";
 import { PatientAvatar } from "@/features/patients/PatientAvatar";
 import { patientAge, type Patient } from "@/features/patients/types";
 import { appointmentRepo, consultationRepo, patientRepo } from "@/lib/repositories";
@@ -21,6 +22,10 @@ function Inner() {
   const canWrite = useCan("patient:write");
   const canConsult = useCan("consultation:write");
   const clinical = useCan("clinical:read");
+  const canDelete = useCan("patient:delete");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const router = useRouter();
+  const toast = useToast();
 
   useEffect(() => {
     if (!id) return setP(null);
@@ -75,6 +80,19 @@ function Inner() {
           </ol>
         )}
       </Card>
+      {canDelete && (
+        <div className="print:hidden"><Button variant="ghost" className="text-danger" onClick={() => setConfirmDelete(true)}>Delete patient…</Button></div>
+      )}
+      <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title="Delete patient?">
+        <div className="space-y-3 text-sm">
+          <p>This permanently deletes <b>{p.name}</b> ({p.code}) together with {history.length} consultation(s) and {appts.length + history.filter((h) => h.appointmentId).length} appointment(s).</p>
+          <p className="font-medium text-danger">Data is stored only in this browser. There is no recycle bin; the only way to undo this is to restore a backup file you exported earlier.</p>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setConfirmDelete(false)}>Cancel</Button>
+            <Button variant="danger" onClick={async () => { await deletePatient(p.id); toast("Patient deleted"); router.push("/patients"); }}>Delete permanently</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

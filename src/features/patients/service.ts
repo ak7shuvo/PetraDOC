@@ -1,5 +1,5 @@
 import { newId } from "@/lib/repository";
-import { patientRepo } from "@/lib/repositories";
+import { appointmentRepo, consultationRepo, patientRepo } from "@/lib/repositories";
 import { emptyPatient, type Patient } from "./types";
 
 async function nextCode(): Promise<string> {
@@ -23,4 +23,11 @@ export function validatePatient(p: PatientInput): Record<string, string> {
 export async function savePatient(input: PatientInput, existing?: Patient): Promise<Patient> {
   if (existing) return patientRepo.save({ ...existing, ...input });
   return patientRepo.save({ ...emptyPatient(), ...input, id: newId(), code: await nextCode() });
+}
+
+/** Deletes the patient AND their consultations and appointments. Not undoable without a backup. */
+export async function deletePatient(id: string) {
+  for (const c of await consultationRepo.list({ where: { patientId: id } })) await consultationRepo.remove(c.id);
+  for (const a of await appointmentRepo.list({ where: { patientId: id } })) await appointmentRepo.remove(a.id);
+  await patientRepo.remove(id);
 }

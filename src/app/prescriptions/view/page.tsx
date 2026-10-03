@@ -48,7 +48,7 @@ function Inner() {
         <Button variant="secondary" onClick={pdf} disabled={busy}>{busy ? "Creating PDF…" : "Download PDF"}</Button>
       </div>
       <p className="text-xs text-muted print:hidden">
-        Thermal sizes use your browser's print dialog with that paper size. Direct Bluetooth/USB/network thermal printing is not available in the web app
+        Thermal sizes use your browser&apos;s print dialog with that paper size. Direct Bluetooth/USB/network thermal printing is not available in the web app
         ({PRINTERS.slice(1).map((p) => p.name).join(", ")} need the native app).
       </p>
       <div className="overflow-x-auto rounded-xl border border-border bg-surface-2 p-2 print:overflow-visible print:border-0 print:bg-white print:p-0">

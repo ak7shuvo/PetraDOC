@@ -8,6 +8,7 @@ import type { Consultation } from "@/features/consultation/types";
 import { doctorLabel, listDoctors } from "@/features/doctor-profile/service";
 import type { DoctorProfile } from "@/features/doctor-profile/types";
 import { useCan } from "@/features/auth/RoleProvider";
+import { getSettings } from "@/features/settings/service";
 import { localDate } from "@/lib/date";
 import { appointmentRepo, consultationRepo, patientRepo } from "@/lib/repositories";
 
@@ -36,6 +37,8 @@ export default function Dashboard() {
   const [doctors, setDoctors] = useState<DoctorProfile[]>([]);
   const [doctorId, setDoctorId] = useState("");
   const clinical = useCan("clinical:read");
+  const [lastBackup, setLastBackup] = useState<string | null | undefined>(undefined);
+  useEffect(() => { getSettings().then((x) => setLastBackup(x.lastBackupAt ?? null)); }, []);
   useEffect(() => { listDoctors().then(setDoctors); }, []);
   useEffect(() => { load(doctorId).then(setS).catch(() => setS(null)); }, [doctorId]);
 
@@ -53,6 +56,11 @@ export default function Dashboard() {
             onChange={(e) => setDoctorId(doctors.find((d) => doctorLabel(d) === e.target.value)?.id ?? "")} />
         )}
       </div>
+      {lastBackup === null && s && s.patients > 0 && (
+        <p role="note" className="rounded-lg bg-amber-50 p-3 text-sm text-warning">
+          Your data is stored only in this browser and has never been backed up. <Link href="/settings" className="font-medium underline">Export a backup</Link>.
+        </p>
+      )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {cards.map(([label, n]) => (
           <Card key={label}><div className="text-sm text-muted">{label}</div><div className="mt-1 text-2xl font-bold">{n ?? "–"}</div></Card>

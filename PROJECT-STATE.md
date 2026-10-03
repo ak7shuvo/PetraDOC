@@ -1,45 +1,48 @@
 # PROJECT STATE
 
 ## Current phase
-Phases 1-9 complete. Phase 10 (final integration, audit triage, patient delete, README) is next.
+Phases 1-10 complete (this session). Project is runnable and feature-complete against `docs/MASTER-PROMPT.md` for the web app. Next work: real authentication/server sync, native builds (Capacitor/Tauri), dependency major upgrades, device/accessibility testing.
 
 ## Completed
-- Scaffold verified: `npm install`, `npm run typecheck`, `npm run build` all pass.
-- Storage: `Repository<T>` (src/lib/repository.ts) + Dexie/IndexedDB implementation (src/lib/dexie-repository.ts). App works with no server. `src/lib/repositories.ts` is the single place storage is obtained; UI/services never import Dexie.
-- Auth seam: role permission matrix + local "Active role" selector (src/features/auth). **No login/authentication exists; real auth is pending.** Role gating is UI-only, not a security boundary.
-- UI kit (src/components/ui): Button, Input, Select, Textarea, Card, Modal (native `<dialog>`), Badge, EmptyState, Toast.
-- Responsive shell: sidebar (desktop), bottom nav + "More" (mobile), 44px targets.
-- Dashboard: real counts from repositories, recent consultations, quick actions, empty states.
+- Phase 1: Dexie `Repository<T>` storage (no server needed), UI kit (Button, Input, Select, Textarea, Card, Modal, Badge, EmptyState, Toast), responsive shell, dashboard with real counts, role helper.
+- Phase 2: Doctor profile (unlimited education/training/experience), multiple chambers, live prescription header preview.
+- Phase 3: Patients (auto ID, all fields, local photo, search by name/mobile/ID, detail + timeline).
+- Phase 4: Consultation (complaint, history, vitals with BMI, examination, diagnosis, advice, follow-up), auto Rx ID.
+- Phase 5: Medicine database (+favourites), prescription editor (search, manual, templates, "use previous prescription as new"), prescriptions list, footer setting.
+- Phase 6: Investigation database, categories, custom panels, ordering in consultations.
+- Phase 7: Appointments with tokens/queue, follow-up tracking/booking, multiple doctors + per-doctor chambers, dashboard/timeline wiring.
+- Phase 8: A4 print, PDF download, 58/80 mm thermal layouts, `PrinterAdapter` (browser adapter real; Bluetooth/USB/LAN explicitly unavailable).
+- Phase 9: Backup/restore (JSON file), licensing (signed-key verification, trial, states, read-only enforcement), role/permission matrix with clinical-data separation.
+- Phase 10: Patient delete (cascades to consultations/appointments, confirmation), browser-only-data warnings, ESLint config, npm audit triage, README.
 
-- Phase 2: Doctor Profile (personal, professional, unlimited education/training/experience), multiple Chambers (CRUD), live prescription header preview (profile + selected chamber), photo stored locally. Editing gated to Doctor/Admin roles (UI-only). Single local doctor record (id `primary`); multi-doctor deferred to Phase 7.
-
-- Phase 3: Patients. Create/edit, auto Patient ID (`PD-000001`, max+1), all master-prompt fields, local photo (resized JPEG data URL), search by name/mobile/ID, detail page with history timeline (empty until consultations exist). Pages: `/patients`, `/patients/new`, `/patients/edit?id=`, `/patients/detail?id=`.
-- Phase 4: Consultation (complaint, history, vitals incl. auto BMI, examination, diagnosis, advice, follow-up), auto Prescription ID (RX-000001), local-date handling, prescription view page (A4 document component), patient timeline links to visits. Full `Consultation` model and all Dexie tables (v2) defined up front.
-- Phase 5: Medicine database (generic/brand/strength/form/route/manufacturer, favourites; empty by default, nothing pre-seeded), prescription editor in consultations (search DB, favourites, manual entry, templates, 'Use previous prescription as new'), prescriptions list, prescription footer setting.
-- Phase 6: Investigation database with categories, custom panels, ordering in consultations (search, panel, manual entry, notes), shown on prescription. Empty by default.
-- Phase 7: Appointments with per-doctor/chamber/day token, queue statuses (scheduled → waiting → in consultation → done / cancelled), start-consultation from queue (auto-marks done on save), follow-up tracking (overdue/upcoming, book from follow-up), multiple doctors (profile switcher, per-doctor chambers, doctor filter on dashboard/queue), dashboard counts and patient timeline now include appointments and consultations. Doctors cannot yet be deleted.
-- Phase 8: Prescription output: A4 browser print (print CSS hides app chrome), real PDF download, 58mm/80mm thermal layouts, `PrinterAdapter` seam with a real BrowserPrinterAdapter and explicitly-unavailable Bluetooth/USB/LAN adapters (documented in docs/NATIVE-INTEGRATION.md). Dependencies added: `jspdf` + `html2canvas` (both dynamically imported only on 'Download PDF'): needed to produce a real PDF file in-browser that renders Bengali/any web font correctly; the alternative (vector PDF libraries) requires bundling and shaping Bengali fonts manually.
-- Phase 9: **Backup/restore** (versioned JSON export/import through repositories, validated before replacing data, license excluded, warning that data lives only in this browser + last-backup date; Google Drive is an explicit unavailable destination). **Licensing** (UNACTIVATED/TRIAL/ACTIVE/EXPIRED/REVOKED/INVALID; `LicenseRepository` (Dexie), `LicenseValidator` (ECDSA P-256 signature verification with a build-time public key from `NEXT_PUBLIC_LICENSE_PUBLIC_KEY`, no hardcoded key), service, banner, Settings card; separate from Doctor Profile; writes are blocked unless TRIAL/ACTIVE; vendor tool `scripts/license-tool.mjs`). **Roles**: matrix extended (clinical:read, backup/license manage, patient:delete); Receptionist/Admin cannot see clinical pages/data; nav filtered; UI-only gating.
-
-## Remaining
-- Phases 4-10 per master prompt.
+## Remaining / future
+- Real authentication + server-side enforcement; PostgreSQL/Prisma wiring and sync; SQLite for native.
+- Capacitor/Tauri builds, native thermal printing (Bluetooth/USB), Google Drive backup destination, license server + revocation feed.
+- Upgrade Next 14 → current and Tailwind 3 → 4 (clears audit advisories).
+- Doctor delete, bulk import of medicines/tests, encrypted backups, selectable-text PDF.
 
 ## Known issues
-- Dashboard "Today's appointments"/"Follow-ups"/"Recent consultations" read real repos but stay 0 until Phases 4/7 create data.
-- IndexedDB is per-browser/device; no backup yet (Phase 9).
-
-- Patient delete is intentionally not implemented (no requirement; avoids orphaned history). Patient ID uses max+1 locally; will need revisiting for multi-device sync.
-- Patient photos are stored inside IndexedDB records; included in future backups.
-
-- PDF is raster (html2canvas image inside jsPDF): text is not selectable, and an A4 prescription longer than one page is split at a fixed height (may cut a line). Typical one-page prescriptions are fine.
+- Data is only in the browser's IndexedDB (unencrypted). Backups are unencrypted JSON.
+- No authentication; role gating is UI-only, not a security boundary.
+- Licensing is client-side; the trial is local and resettable; no revocation source exists.
+- PDF is raster; long A4 prescriptions are split at a fixed page height (can cut a line).
+- Patient ID / Rx ID / token use max+1 locally: will need rework for multi-device sync.
+- Restore is not atomic across tables (input is validated first).
+- `npm audit`: 10 advisories (9 high, 1 critical), all require major upgrades (see AUDIT.md).
+- Not tested: real phones/tablets, screen readers, real printers, Safari/Firefox, large datasets (search is in-memory).
 
 ## Architecture decisions
-- Web-first Dexie storage; prisma/schema.prisma kept as future server target, NOT wired.
-- Features in `src/features/*`; native capabilities behind `src/platform`.
-- Detail/edit pages use query params (`/patients/detail?id=`) rather than dynamic segments, keeping static-export (Capacitor/Tauri) compatibility.
+- Web-first Dexie storage behind `Repository<T>`; `src/lib/repositories.ts` is the only place storage is obtained. `prisma/schema.prisma` is a future target, not wired.
+- Features in `src/features/*`; native seams: `PrinterAdapter`, `BackupDestination`, `PlatformCapabilities`.
+- Detail/edit pages use query params (`/patients/detail?id=`) for static-export (Capacitor/Tauri) compatibility.
+- Consultation embeds medicines and ordered tests; the prescription is a rendering of a consultation (Rx ID = `rxCode`).
+- Licensing is isolated from the Doctor Profile and verifies ECDSA P-256 signatures against a build-time public key; no hardcoded key.
+- BMDC number and qualifications are user-provided, not verified (labelled in the UI).
 
-## Dependencies added
-- `dexie` — IndexedDB wrapper for the web repository implementation (local-first, no server needed). No form/validation library: validation is small hand-written functions.
+## Dependencies added (and why)
+- `dexie`: IndexedDB wrapper for the local-first repository implementation.
+- `jspdf` + `html2canvas`: generate a real PDF file in-browser that renders Bengali/any web font correctly (dynamically imported only on "Download PDF"). Vector PDF libraries would need Bengali fonts bundled and shaped manually.
+- No form/validation library: validation is small hand-written functions.
 
-## Next steps
-1. Phase 4 (Consultation + vitals); extend `Consultation` type and make the timeline/dashboard show real data.
+## How to run
+`npm install && npm run dev` (http://localhost:3000); `npm run build`; `npm run typecheck`; `npm run lint`.
