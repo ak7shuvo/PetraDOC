@@ -19,3 +19,6 @@ db.version(2).stores({
   settings: "id",
   licenses: "id",
 });
+db.version(3).stores({
+  consultations: "id, patientId, date, doctorId, followUpDate",
+});

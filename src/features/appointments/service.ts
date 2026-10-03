@@ -21,8 +21,10 @@ export const setStatus = async (a: Appointment, status: AppointmentStatus) => ap
 
 /** Follow-ups that have a date but no appointment booked yet (overdue + upcoming). */
 export async function pendingFollowUps(doctorId?: string): Promise<Consultation[]> {
-  const all = await consultationRepo.list(doctorId ? { where: { doctorId } } : {});
-  return all.filter((c) => c.followUpDate && !c.followUpAppointmentId).sort((a, b) => a.followUpDate!.localeCompare(b.followUpDate!));
+  // followUpDate is indexed: the cursor only visits consultations that have one.
+  return consultationRepo.list({
+    orderBy: "followUpDate", where: doctorId ? { doctorId } : undefined, filter: (c) => !!c.followUpDate && !c.followUpAppointmentId,
+  });
 }
 
 export const isOverdue = (c: Consultation) => !!c.followUpDate && c.followUpDate < localDate();

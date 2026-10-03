@@ -378,6 +378,29 @@ export const tests = {
     await b.close();
   },
 
+  async paginationAndIndexes() {
+    const { b, p } = await open();
+    await seedViaBackup(p, genData({ patients: 120, consultations: 130, appointmentsToday: 4 }));
+    await p.goto(p.base + "/patients"); await p.waitForTimeout(700);
+    ok("pagination: patients page shows 50 rows", (await p.locator("main li").count()) === 50);
+    await p.getByRole("button", { name: "Show more" }).click(); await p.waitForTimeout(500);
+    ok("pagination: Show more loads next 50", (await p.locator("main li").count()) === 100);
+    await p.getByLabel("Search patients").fill("PD-000100"); await p.waitForTimeout(600);
+    ok("pagination: search finds a patient beyond the first page", (await p.locator("main li").count()) === 1);
+    await p.goto(p.base + "/consultations"); await p.waitForTimeout(700);
+    ok("pagination: consultations page shows 50 rows + Show more", (await p.locator("main li").count()) === 50 && (await p.getByRole("button", { name: "Show more" }).count()) === 1);
+    await p.goto(p.base + "/prescriptions"); await p.getByLabel("Search prescriptions").fill("RX-000130"); await p.waitForTimeout(700);
+    ok("pagination: prescription search by Rx ID", (await p.locator("main li").count()) === 1);
+    await p.getByLabel("Search prescriptions").fill("Rahim"); await p.waitForTimeout(700);
+    ok("pagination: prescription search by patient name", (await p.locator("main li").count()) > 0);
+    await p.goto(p.base + "/"); await p.waitForTimeout(700);
+    const txt = await p.locator("main").innerText();
+    ok("indexes: dashboard counts (120 patients, 13 follow-ups, 4 appts, 5 recent)", txt.includes("Patients\n120") && txt.includes("Pending follow-ups\n13") && txt.includes("Today's appointments\n4") && txt.includes("Recent consultations\n5"), txt.replace(/\n/g, " ").slice(0, 200));
+    await p.goto(p.base + "/patients/detail?id=p3"); await p.waitForTimeout(600);
+    ok("indexes: timeline loads this patient's consultations only", (await p.locator("ol li").count()) >= 1 && !(await p.locator("ol").innerText()).includes("RX-000002"));
+    await b.close();
+  },
+
   async mobileAndAllPagesLoad() {
     for (const width of [360, 390]) {
       const { b, p } = await open({ width });

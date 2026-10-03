@@ -1,22 +1,14 @@
 "use client";
 import { RequirePermission } from "@/features/auth/RoleProvider";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Card, EmptyState } from "@/components/ui";
-import type { Consultation } from "@/features/consultation/types";
-import { consultationRepo, patientRepo } from "@/lib/repositories";
+import { useState } from "react";
+import { Button, Card, EmptyState } from "@/components/ui";
+import { useConsultationList } from "@/features/consultation/useConsultationList";
 
 function PrescriptionsPage() {
   const [q, setQ] = useState("");
-  const [rows, setRows] = useState<(Consultation & { patientName: string })[] | null>(null);
-  useEffect(() => {
-    Promise.all([consultationRepo.list(), patientRepo.list()]).then(([c, p]) => {
-      const names = new Map(p.map((x) => [x.id, x.name]));
-      setRows(c.filter((x) => x.medicines.length > 0).sort((a, b) => b.date.localeCompare(a.date))
-        .map((x) => ({ ...x, patientName: names.get(x.patientId) ?? "Unknown patient" })));
-    });
-  }, []);
-  const shown = rows?.filter((r) => `${r.patientName} ${r.rxCode}`.toLowerCase().includes(q.toLowerCase()));
+  const { rows, more, showMore } = useConsultationList({ search: q, onlyWithMedicines: true });
+  const shown = rows;
   return (
     <div className="space-y-4">
       <h1 className="font-display text-2xl font-bold">Prescriptions</h1>
@@ -38,6 +30,7 @@ function PrescriptionsPage() {
           </ul>
         </Card>
       )}
+      {more && <div className="flex justify-center"><Button variant="secondary" onClick={showMore}>Show more</Button></div>}
     </div>
   );
 }

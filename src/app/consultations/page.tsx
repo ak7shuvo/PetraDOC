@@ -1,21 +1,13 @@
 "use client";
 import { RequirePermission } from "@/features/auth/RoleProvider";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Card, EmptyState, linkButtonClass } from "@/components/ui";
+import { Button, Card, EmptyState, linkButtonClass } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
-import type { Consultation } from "@/features/consultation/types";
-import { consultationRepo, patientRepo } from "@/lib/repositories";
+import { useConsultationList } from "@/features/consultation/useConsultationList";
 
 function ConsultationsPage() {
-  const [rows, setRows] = useState<(Consultation & { patientName: string })[] | null>(null);
+  const { rows, more, showMore } = useConsultationList();
   const canWrite = useCan("consultation:write");
-  useEffect(() => {
-    Promise.all([consultationRepo.list(), patientRepo.list()]).then(([c, p]) => {
-      const names = new Map(p.map((x) => [x.id, x.name]));
-      setRows(c.sort((a, b) => b.date.localeCompare(a.date)).map((x) => ({ ...x, patientName: names.get(x.patientId) ?? "Unknown patient" })));
-    });
-  }, []);
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
@@ -38,6 +30,7 @@ function ConsultationsPage() {
           </ul>
         </Card>
       )}
+      {more && <div className="flex justify-center"><Button variant="secondary" onClick={showMore}>Show more</Button></div>}
     </div>
   );
 }

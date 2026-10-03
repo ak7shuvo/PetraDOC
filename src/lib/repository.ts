@@ -11,8 +11,13 @@ export interface BaseEntity {
 
 export interface ListQuery<T> {
   search?: string;
-  /** Exact-match filter on top-level fields. */
+  /** Exact-match filter on top-level fields. An indexed field narrows the DB read. */
   where?: Partial<T>;
+  /** Extra in-memory predicate (applied while iterating, so limit() can stop early). */
+  filter?: (e: T) => boolean;
+  /** Order by an indexed field using a DB cursor (fast with limit). Without it: newest-updated first. */
+  orderBy?: keyof T & string;
+  desc?: boolean;
   limit?: number;
   offset?: number;
 }

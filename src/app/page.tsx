@@ -19,16 +19,17 @@ interface Stats {
 
 async function load(doctorId: string): Promise<Stats> {
   const where = doctorId ? { doctorId } : {};
-  const [patients, appts, consults, fu] = await Promise.all([
-    patientRepo.list(), appointmentRepo.list({ where: { ...where, date: localDate() } }),
-    consultationRepo.list({ where }), pendingFollowUps(doctorId || undefined),
+  const [patientCount, appts, consults, fu] = await Promise.all([
+    patientRepo.count(), appointmentRepo.list({ where: { ...where, date: localDate() } }),
+    consultationRepo.list({ where, orderBy: "date", desc: true, limit: 5 }), pendingFollowUps(doctorId || undefined),
   ]);
-  const names = new Map(patients.map((p) => [p.id, p.name]));
+  const ids = [...new Set([...consults, ...appts].map((x) => x.patientId))];
+  const names = new Map((await Promise.all(ids.map((id) => patientRepo.get(id)))).filter((p) => p).map((p) => [p!.id, p!.name]));
   return {
-    patients: patients.length,
+    patients: patientCount,
     today: appts.filter((a) => a.status !== "cancelled").sort((a, b) => a.token - b.token),
     followUps: fu.length, names,
-    recent: consults.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5).map((c) => ({ ...c, patientName: names.get(c.patientId) ?? "Unknown patient" })),
+    recent: consults.map((c) => ({ ...c, patientName: names.get(c.patientId) ?? "Unknown patient" })),
   };
 }
 
