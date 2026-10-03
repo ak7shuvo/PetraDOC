@@ -21,7 +21,7 @@ Scripts live in `scripts/` (`npm run e2e`, `e2e:license`, `a11y`, `perf`) so eve
 | Accessibility | axe-core WCAG 2 A/AA + best-practice: 0 serious/critical on 15 pages x {390px, 1280px} + open dialog; skip link is first Tab stop; modal keeps focus off the page and Escape restores focus; invalid fields are `aria-invalid` with linked messages (a11y + e2e) |
 | Scale (2,000 patients / 5,000 consultations, restored through the real restore flow) | initial patient list 134 ms, name search 226 ms, mobile search 79 ms, ID search 209 ms, dashboard 208 ms, patient timeline 107 ms, consultations list 141 ms, prescriptions list 159 ms, appointments 280 ms; lists render 50 rows. Before optimisation: consultations 765 ms, prescriptions 936 ms, name search 656 ms, 2,000 DOM rows. Restore of that dataset: 2.9 s |
 | Dependencies | `npm audit --omit=dev`: 0 vulnerabilities. Full audit: 7 high, all dev-tool only (see below) |
-| Dev server | `next dev` serves pages (checked in Phase 10 before the Next 16 upgrade; the production build and all e2e run on Next 16) |
+| Dev server | `next dev` (Next 16, Turbopack) serves `/`, `/patients`, `/profile`, `/settings` with HTTP 200 and no warnings; production build and all e2e run on Next 16 |
 
 ## UNVERIFIED (needs a real device, printer or assistive tech)
 - **Real phone/tablet**: touch feel, on-screen keyboards, camera/photo picker, add-to-home-screen install and standalone mode, safe-area insets (iOS), performance on low-end hardware.
