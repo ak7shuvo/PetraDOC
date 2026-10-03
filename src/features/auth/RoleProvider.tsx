@@ -33,7 +33,7 @@ export function useCan(p: Permission) {
 export function RequirePermission({ permission, children }: { permission: Permission; children: React.ReactNode }) {
   const { role } = useRole();
   if (!can(role, permission)) {
-    return <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning">The active role ({ROLE_LABELS[role]}) does not have access to this page.</p>;
+    return <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning-fg">The active role ({ROLE_LABELS[role]}) does not have access to this page.</p>;
   }
   return <>{children}</>;
 }
@@ -43,7 +43,7 @@ export function RoleSelector() {
   const { role, setRole } = useRole();
   return (
     <label className="block text-xs text-muted">
-      Active role <span className="text-warning">(local only, no login yet)</span>
+      Active role <span className="text-warning-fg">(local only, no login yet)</span>
       <select
         value={role}
         onChange={(e) => setRole(e.target.value as Role)}

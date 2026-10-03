@@ -86,7 +86,7 @@ export function PrescriptionEditor({ items, onChange, patientId, currentId }: {
               <Input label="Duration" placeholder="7 days" value={it.duration} onChange={(e) => update(it.id, "duration", e.target.value)} />
             </div>
             <div className="mt-3"><Input label="Instructions" placeholder="After meals" value={it.instructions} onChange={(e) => update(it.id, "instructions", e.target.value)} /></div>
-            <Button variant="ghost" className="mt-2 text-danger" onClick={() => onChange(items.filter((i) => i.id !== it.id))}>Remove medicine {n + 1}</Button>
+            <Button variant="ghost" className="mt-2 text-danger-fg" onClick={() => onChange(items.filter((i) => i.id !== it.id))}>Remove medicine {n + 1}</Button>
           </fieldset>
         ))}
       </div>

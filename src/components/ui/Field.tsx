@@ -11,7 +11,7 @@ function Wrap({ id, label, error, hint, children }: Common & { id: string; child
       <label htmlFor={id} className="mb-1 block text-sm font-medium">{label}</label>
       {children}
       {hint && !error && <p className="mt-1 text-xs text-muted">{hint}</p>}
-      {error && <p id={`${id}-err`} role="alert" className="mt-1 text-xs text-danger">{error}</p>}
+      {error && <p id={`${id}-err`} role="alert" className="mt-1 text-xs text-danger-fg">{error}</p>}
     </div>
   );
 }

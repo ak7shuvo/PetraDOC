@@ -36,7 +36,7 @@ export function PatientForm({ patient }: { patient?: Patient }) {
     }
   };
 
-  if (!canWrite) return <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning">Editing is unavailable: your role or license does not allow it.</p>;
+  if (!canWrite) return <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning-fg">Editing is unavailable: your role or license does not allow it.</p>;
   return (
     <form onSubmit={submit} noValidate className="space-y-4">
       {patient && <p className="text-sm text-muted">Patient ID: <span className="font-medium text-ink">{patient.code}</span></p>}

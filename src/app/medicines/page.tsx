@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Badge, Button, Card, EmptyState, Input, Modal, Select, useToast } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
 import { emptyMedicine, FORMS, medicineLabel, ROUTES, type Medicine } from "@/features/medicines/types";
+import { BulkImport } from "@/features/import/BulkImport";
+import { medicineImport } from "@/features/medicines/import";
 import { newId } from "@/lib/repository";
 import { medicineRepo } from "@/lib/repositories";
 
@@ -30,7 +32,7 @@ function MedicinesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <h1 className="font-display text-2xl font-bold">Medicines</h1>
-        {canWrite && <Button onClick={() => { setErr(""); setEdit({ ...emptyMedicine(), id: newId() }); }}>Add medicine</Button>}
+        {canWrite && <div className="flex gap-2"><BulkImport kind={medicineImport} onDone={load} /><Button onClick={() => { setErr(""); setEdit({ ...emptyMedicine(), id: newId() }); }}>Add medicine</Button></div>}
       </div>
       <p className="text-xs text-muted">Your own medicine list. Nothing is pre-loaded; you can also type medicines manually inside a prescription.</p>
       <input type="search" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search medicines" placeholder="Search generic, brand or manufacturer"
@@ -53,7 +55,7 @@ function MedicinesPage() {
                       {m.favourite ? "★" : "☆"}
                     </Button>
                     <Button variant="ghost" onClick={() => { setErr(""); setEdit(m); }}>Edit</Button>
-                    <Button variant="ghost" className="text-danger" onClick={async () => { if (confirm(`Delete ${m.brand || m.generic}?`)) { await medicineRepo.remove(m.id); load(); } }}>Delete</Button>
+                    <Button variant="ghost" className="text-danger-fg" onClick={async () => { if (confirm(`Delete ${m.brand || m.generic}?`)) { await medicineRepo.remove(m.id); load(); } }}>Delete</Button>
                   </>
                 )}
               </li>

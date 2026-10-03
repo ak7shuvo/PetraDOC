@@ -11,7 +11,7 @@ function Inner() {
   const [c, setC] = useState<Consultation | null | undefined>(undefined);
   useEffect(() => { if (id) consultationRepo.get(id).then(setC); else setC(null); }, [id]);
   if (c === undefined) return <p className="text-sm text-muted">Loading…</p>;
-  if (c === null) return <p className="text-sm text-danger">Consultation not found.</p>;
+  if (c === null) return <p className="text-sm text-danger-fg">Consultation not found.</p>;
   return <ConsultationForm initial={c} />;
 }
 

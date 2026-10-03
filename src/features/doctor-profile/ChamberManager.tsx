@@ -36,7 +36,7 @@ export function ChamberManager({ doctorId, chambers, onChanged, canEdit }: { doc
               {canEdit && (
                 <div className="flex shrink-0 gap-1">
                   <Button variant="ghost" onClick={() => { setErr(""); setEditing(c); }}>Edit</Button>
-                  <Button variant="ghost" className="text-danger" onClick={async () => {
+                  <Button variant="ghost" className="text-danger-fg" onClick={async () => {
                     if (confirm(`Delete chamber "${c.name}"?`)) { await removeChamber(c.id); onChanged(); toast("Chamber deleted"); }
                   }}>Delete</Button>
                 </div>

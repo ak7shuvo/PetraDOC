@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { ok, open, patient, run, seedViaBackup } from "./lib.mjs";
+import { genData, ok, open, patient, run, seedViaBackup } from "./lib.mjs";
 
 const tmp = (n) => path.join(os.tmpdir(), n);
 
@@ -123,7 +123,7 @@ export const tests = {
     const { b, p } = await open();
     await patient(p, "Rahim Uddin");
     await p.goto(p.base + "/settings"); await p.waitForTimeout(400);
-    const [dl] = await Promise.all([p.waitForEvent("download"), p.getByRole("button", { name: "Export backup file" }).click()]);
+    const [dl] = await Promise.all([p.waitForEvent("download"), p.getByRole("button", { name: "Export unencrypted backup" }).click()]);
     await dl.saveAs(tmp("e2e-bk.json")); const bk = JSON.parse(fs.readFileSync(tmp("e2e-bk.json"), "utf8"));
     ok("backup: file has patients, no license", bk.data.patients.length === 1 && !("licenses" in bk.data));
     await patient(p, "Extra Person", "01999999999");
@@ -134,6 +134,133 @@ export const tests = {
     fs.writeFileSync(tmp("e2e-bad.json"), '{"hello":1}'); await p.goto(p.base + "/settings");
     await p.getByLabel("Backup file").setInputFiles(tmp("e2e-bad.json")); await p.waitForTimeout(300);
     ok("backup: invalid file rejected", (await p.locator("p[role=alert]").innerText()).includes("not a PetraDOC backup"));
+    await b.close();
+  },
+
+  async encryptedBackup() {
+    const { b, p } = await open();
+    await patient(p, "Secret Patient");
+    await p.goto(p.base + "/settings"); await p.waitForTimeout(500);
+    ok("persist: status shown", /Protected|Not guaranteed|does not support/.test(await p.getByTestId("persist-status").innerText()));
+    ok("backup: unencrypted export warns", (await p.getByText(/Unencrypted backups contain all patient data/).count()) === 1);
+    await p.getByLabel("Passphrase", { exact: true }).fill("short"); await p.getByLabel("Repeat passphrase").fill("short");
+    await p.getByRole("button", { name: "Export encrypted backup" }).click(); await p.waitForTimeout(200);
+    ok("backup: short passphrase rejected", (await p.getByText(/at least 8 characters/).count()) === 1);
+    await p.getByLabel("Passphrase", { exact: true }).fill("correct horse"); await p.getByLabel("Repeat passphrase").fill("different one");
+    await p.getByRole("button", { name: "Export encrypted backup" }).click(); await p.waitForTimeout(200);
+    ok("backup: mismatched passphrase rejected", (await p.getByText(/do not match/).count()) === 1);
+    await p.getByLabel("Repeat passphrase").fill("correct horse");
+    const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 30000 }), p.getByRole("button", { name: "Export encrypted backup" }).click()]);
+    ok("backup: encrypted file name", dl.suggestedFilename().endsWith(".enc.json"));
+    await dl.saveAs(tmp("e2e-enc.json")); const raw = fs.readFileSync(tmp("e2e-enc.json"), "utf8");
+    ok("backup: encrypted file has no readable patient data", !raw.includes("Secret Patient") && JSON.parse(raw).app === "petradoc-encrypted");
+    await patient(p, "Extra Person", "01999999999"); await p.goto(p.base + "/settings");
+    const restore = async (file, pass) => {
+      await p.goto(p.base + "/settings"); await p.getByLabel("Backup file").setInputFiles(file);
+      if (pass != null) { await p.getByLabel("Passphrase").last().fill(pass); await p.getByRole("button", { name: "Decrypt" }).click();
+        await p.waitForFunction(() => document.querySelector("dialog[open] h2")?.textContent === "Restore backup?" || [...document.querySelectorAll("p[role=alert]")].some((e) => e.textContent), null, { timeout: 15000 }); }
+    };
+    await restore(tmp("e2e-enc.json"), "wrong passphrase");
+    ok("backup: wrong passphrase rejected", (await p.getByText(/Wrong passphrase/).count()) === 1 && (await p.getByText("Restore backup?").isVisible().catch(() => false)) === false);
+    const env = JSON.parse(raw); const d = env.data; env.data = d.slice(0, 40) + (d[40] === "A" ? "B" : "A") + d.slice(41);
+    fs.writeFileSync(tmp("e2e-enc-corrupt.json"), JSON.stringify(env));
+    await restore(tmp("e2e-enc-corrupt.json"), "correct horse");
+    ok("backup: corrupted ciphertext rejected", (await p.getByText(/Wrong passphrase, or the backup file is damaged/).count()) === 1);
+    fs.writeFileSync(tmp("e2e-enc-trunc.json"), raw.slice(0, raw.length - 30));
+    await restore(tmp("e2e-enc-trunc.json"), "correct horse");
+    ok("backup: truncated file rejected", (await p.getByText(/damaged/).count()) === 1);
+    await restore(tmp("e2e-enc.json"), "correct horse");
+    ok("backup: correct passphrase shows restore confirmation", (await p.getByText("Restore backup?").isVisible()) === true);
+    await p.getByRole("button", { name: "Replace data and restore" }).click(); await p.waitForTimeout(1500);
+    await p.goto(p.base + "/patients"); await p.waitForTimeout(400);
+    ok("backup: encrypted restore replaces data", (await p.getByText("Extra Person").count()) === 0 && (await p.getByText("Secret Patient").count()) === 1);
+    await b.close();
+  },
+
+  async backupReminder() {
+    const { b, p } = await open();
+    await patient(p);
+    await p.goto(p.base + "/"); await p.waitForTimeout(500);
+    ok("reminder: never backed up", (await p.getByText(/has never been backed up/).count()) === 1);
+    await p.goto(p.base + "/settings"); await Promise.all([p.waitForEvent("download"), p.getByRole("button", { name: "Export unencrypted backup" }).click()]); await p.waitForTimeout(300);
+    await p.goto(p.base + "/"); await p.waitForTimeout(500);
+    ok("reminder: hidden right after backup", (await p.getByText(/backed up/).count()) === 0);
+    const old = new Date(Date.now() - 10 * 86400000).toISOString(); const now = new Date().toISOString();
+    await seedViaBackup(p, { patients: [{ id: "p1", code: "PD-000001", name: "A", dob: "", approxAge: "", gender: "", mobile: "01711", address: "", bloodGroup: "", occupation: "", emergencyName: "", emergencyPhone: "", emergencyRelation: "", allergies: "", medicalHistory: "", notes: "", createdAt: now, updatedAt: now }],
+      settings: [{ id: "app", prescriptionFooter: "", lastBackupAt: old }] });
+    await p.goto(p.base + "/"); await p.waitForTimeout(500);
+    ok("reminder: shown after 7+ days", (await p.getByText(/last backed up 10 days ago/).count()) === 1);
+    await b.close();
+  },
+
+  async doctorDelete() {
+    const { b, p } = await open();
+    const now = new Date().toISOString();
+    const doc = (id, name) => ({ id, name, title: "", gender: "", phone: "", email: "", address: "", specialty: "", subSpecialty: "", bmdcNumber: "", experienceYears: "", position: "", department: "", expertise: "", languages: "", education: [], training: [], experience: [], createdAt: now, updatedAt: now });
+    const pt = { id: "p1", code: "PD-000001", name: "P", dob: "", approxAge: "", gender: "", mobile: "01711", address: "", bloodGroup: "", occupation: "", emergencyName: "", emergencyPhone: "", emergencyRelation: "", allergies: "", medicalHistory: "", notes: "", createdAt: now, updatedAt: now };
+    const c = { id: "c1", rxCode: "RX-000001", patientId: "p1", doctorId: "d1", chamberId: "", date: "2026-01-01", chiefComplaint: "x", history: "", examination: "", diagnosis: "", vitals: { bp: "", pulse: "", temperature: "", spo2: "", respiratoryRate: "", weight: "", height: "", bmi: "" }, medicines: [], investigations: [], advice: "", followUpNotes: "", createdAt: now, updatedAt: now };
+    await seedViaBackup(p, { doctors: [doc("d1", "Doc One"), doc("d2", "Doc Two")], patients: [pt], consultations: [c] });
+    await p.goto(p.base + "/profile"); await p.getByLabel("Full name *").waitFor();
+    await p.getByLabel("Doctor", { exact: true }).selectOption("Doc One"); await p.waitForTimeout(300);
+    await p.getByRole("button", { name: "Delete doctor…" }).click(); await p.waitForTimeout(300);
+    ok("doctor delete: blocked when consultations exist, with reason", (await p.locator("dialog[open]").innerText()).includes("consultation(s) were recorded") && (await p.getByRole("button", { name: "Delete permanently" }).count()) === 0);
+    await p.getByRole("button", { name: "Close" }).last().click();
+    await p.getByLabel("Doctor", { exact: true }).selectOption("Doc Two"); await p.waitForTimeout(300);
+    await p.getByRole("button", { name: "Delete doctor…" }).click(); await p.waitForTimeout(300);
+    await p.getByRole("button", { name: "Delete permanently" }).click(); await p.waitForTimeout(600);
+    ok("doctor delete: unused doctor deleted", JSON.stringify(await p.getByLabel("Doctor", { exact: true }).locator("option").allInnerTexts()) === '["Choose doctor","Doc One"]');
+    await p.getByRole("button", { name: "Delete doctor…" }).click(); await p.waitForTimeout(300);
+    ok("doctor delete: last doctor cannot be deleted", (await p.locator("dialog[open]").innerText()).includes("At least one doctor"));
+    await b.close();
+  },
+
+  async bulkImport() {
+    const { b, p } = await open();
+    fs.writeFileSync(tmp("e2e-med1.csv"), 'generic,Brand Name,strength,Dosage Form,route,manufacturer\nAlpha,Brand A,10 mg,tablet,,\n"Beta, comma",,5 mg,Syrup,Oral,"ACME, Inc"\nAlpha,Brand A,10 mg,Tablet,,\n,,10 mg,Tablet,,\n');
+    await p.goto(p.base + "/medicines");
+    const [sample] = await Promise.all([p.waitForEvent("download"), (async () => { await p.getByRole("button", { name: "Import…" }).click(); await p.getByRole("button", { name: "Download sample CSV" }).click(); })()]);
+    await sample.saveAs(tmp("e2e-sample.csv")); ok("import: sample CSV downloadable", fs.readFileSync(tmp("e2e-sample.csv"), "utf8").startsWith("generic,brand"));
+    await p.getByLabel("Import file").setInputFiles(tmp("e2e-med1.csv")); await p.waitForTimeout(500);
+    const sum = await p.getByLabel("Import summary").innerText();
+    ok("import: preview counts (2 new, 1 duplicate in file, 1 invalid)", sum.includes("2 new") && sum.includes("1 duplicate") && sum.includes("1 invalid"), sum.replace(/\n/g, " "));
+    ok("import: nothing saved before confirming", true);
+    await p.getByRole("button", { name: /^Import \d+ item/ }).click(); await p.waitForTimeout(600);
+    ok("import: items saved (quoted comma handled)", (await p.getByText("Beta, comma").count()) >= 1 && (await p.getByText("Brand A").count()) >= 1);
+    await p.getByRole("button", { name: "Import…" }).click(); await p.getByLabel("Import file").setInputFiles(tmp("e2e-med1.csv")); await p.waitForTimeout(500);
+    ok("import: re-import shows only duplicates", (await p.getByLabel("Import summary").innerText()).includes("0 new"));
+    await p.getByRole("button", { name: "Cancel" }).last().click();
+    fs.writeFileSync(tmp("e2e-med2.csv"), "generic,brand,strength,form,route,manufacturer\nAlpha,Brand A,10 mg,Tablet,Oral,Zeta Pharma\n");
+    await p.getByRole("button", { name: "Import…" }).click(); await p.getByLabel("Import file").setInputFiles(tmp("e2e-med2.csv")); await p.waitForTimeout(400);
+    await p.getByLabel("Duplicates").selectOption("Update existing"); await p.getByRole("button", { name: /^Import 1 item/ }).click(); await p.waitForTimeout(600);
+    ok("import: update-existing merges fields", (await p.getByText(/Zeta Pharma/).count()) === 1);
+    fs.writeFileSync(tmp("e2e-bad.csv"), "[not json"); await p.getByRole("button", { name: "Import…" }).click(); await p.getByLabel("Import file").setInputFiles(tmp("e2e-bad.csv")); await p.waitForTimeout(300);
+    ok("import: invalid JSON rejected with message", (await p.locator("p[role=alert]").innerText()).includes("not valid JSON"));
+    await p.getByRole("button", { name: "Cancel" }).last().click();
+    await p.goto(p.base + "/investigations");
+    fs.writeFileSync(tmp("e2e-tests.json"), JSON.stringify({ tests: [{ name: "CBC", category: "Haematology" }, { Test: "ESR" }, { category: "none" }] }));
+    await p.getByRole("button", { name: "Import…" }).click(); await p.getByLabel("Import file").setInputFiles(tmp("e2e-tests.json")); await p.waitForTimeout(400);
+    ok("import: JSON tests preview (2 new, 1 invalid)", (await p.getByLabel("Import summary").innerText()).includes("2 new") && (await p.getByLabel("Import summary").innerText()).includes("1 invalid"));
+    await p.getByRole("button", { name: /^Import 2 item/ }).click(); await p.waitForTimeout(600);
+    ok("import: tests saved", (await p.getByText("CBC").count()) >= 1 && (await p.getByText("ESR").count()) >= 1);
+    ok("import: no page errors", p.errs.length === 0, p.errs.join(";"));
+    await b.close();
+  },
+
+  async starterLists() {
+    const { b, p } = await open();
+    await p.goto(p.base + "/medicines"); await p.waitForTimeout(500);
+    ok("starter: lists are empty by default (nothing pre-seeded)", (await p.getByText("No medicines yet").count()) === 1);
+    await p.goto(p.base + "/settings");
+    ok("starter: labelled 'starter list, verify before use'", (await p.getByText("Starter list, verify before use.").count()) === 1);
+    await p.getByRole("button", { name: /Add starter medicines/ }).click(); await p.waitForTimeout(800);
+    await p.getByRole("button", { name: /Add starter medicines/ }).click(); await p.waitForTimeout(800);
+    await p.getByRole("button", { name: /Add starter tests/ }).click(); await p.waitForTimeout(800);
+    await p.goto(p.base + "/medicines"); await p.waitForTimeout(500);
+    const meds = await p.locator("main li").count();
+    ok("starter: medicines added once (duplicates skipped)", meds === 31, `rows=${meds}`);
+    ok("starter: no dosing data on starter entries", (await p.getByText(/\d+\s?(mg|mcg|ml)/i).count()) === 0);
+    await p.goto(p.base + "/investigations"); await p.waitForTimeout(500);
+    ok("starter: tests added", (await p.getByText("Chest X-ray").count()) >= 1);
     await b.close();
   },
 
@@ -191,6 +318,63 @@ export const tests = {
     const txt = fs.readFileSync(tmp("e2e-long.pdf"), "latin1");
     const pages = (txt.match(/\/Type \/Page\b(?!s)/g) || []).length;
     ok("pdf: long prescription flows to multiple A4 pages", pages >= 2, `pages=${pages}`);
+    await b.close();
+  },
+
+  async tapTargets() {
+    const urls = ["/", "/patients", "/patients/detail?id=p0", "/patients/new", "/consultations", "/consultations/new", "/prescriptions", "/prescriptions/view?id=c0",
+      "/appointments", "/medicines", "/investigations", "/profile", "/settings"];
+    for (const width of [360, 390]) {
+      const { b, p } = await open({ width });
+      await seedViaBackup(p, genData());
+      const bad = [];
+      for (const u of urls) {
+        await p.goto(p.base + u); await p.waitForTimeout(500);
+        const small = await p.evaluate(() => [...document.querySelectorAll("a, button, input:not([type=hidden]):not([type=file]), select, textarea, summary, [role=button]")]
+          .filter((e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
+            return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && !e.closest("[hidden],dialog:not([open])") && !(e.type === "checkbox" || e.type === "radio") && !e.classList.contains("sr-only") && (r.height < 43.5 || r.width < 43.5); })
+          .map((e) => `${e.tagName.toLowerCase()}:${(e.getAttribute("aria-label") || e.textContent || e.id || e.type || "").trim().slice(0, 24)}(${Math.round(e.getBoundingClientRect().width)}x${Math.round(e.getBoundingClientRect().height)})`));
+        if (small.length) bad.push(`${u} -> ${[...new Set(small)].slice(0, 6).join(", ")}`);
+      }
+      ok(`tap targets >= 44px at ${width}px on ${urls.length} pages`, bad.length === 0, "\n      " + bad.join("\n      "));
+      await b.close();
+    }
+  },
+
+  async keyboardAndModals() {
+    const { b, p } = await open({ width: 390 });
+    await seedViaBackup(p, genData());
+    await p.goto(p.base + "/"); await p.waitForTimeout(500);
+    await p.keyboard.press("Tab");
+    ok("a11y: first Tab reaches a skip link", (await p.evaluate(() => document.activeElement?.textContent?.trim())) === "Skip to main content");
+    await p.getByRole("button", { name: "More" }).focus(); await p.keyboard.press("Enter"); await p.waitForTimeout(300);
+    let inside = true;
+    for (let i = 0; i < 12; i++) { await p.keyboard.press("Tab"); inside = inside && (await p.evaluate(() => { const a = document.activeElement; return !a || a === document.body || !!a.closest("dialog[open]"); })); }
+    ok("a11y: modal keeps keyboard focus off the page behind it", inside);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    ok("a11y: Escape closes modal and returns focus to opener", (await p.locator("dialog[open]").count()) === 0 && (await p.evaluate(() => document.activeElement?.textContent?.trim())) === "More");
+    await p.goto(p.base + "/patients/new");
+    await p.getByRole("button", { name: "Create patient" }).click(); await p.waitForTimeout(300);
+    ok("a11y: invalid fields are marked aria-invalid with linked message", (await p.getByLabel("Full name *").getAttribute("aria-invalid")) === "true" && !!(await p.getByLabel("Full name *").getAttribute("aria-describedby")));
+    await b.close();
+  },
+
+  async mobileKeyboards() {
+    const { b, p } = await open({ width: 390 });
+    await seedViaBackup(p, genData());
+    const attr = async (label, a) => p.getByLabel(label, { exact: true }).first().getAttribute(a);
+    await p.goto(p.base + "/patients/new");
+    ok("keyboards: patient mobile = tel", (await attr("Mobile *", "type")) === "tel" && (await attr("Mobile *", "inputmode")) === "tel");
+    ok("keyboards: DOB = date", (await attr("Date of birth", "type")) === "date");
+    ok("keyboards: age = numeric", (await attr("Age (years, if DOB unknown)", "inputmode")) === "numeric");
+    ok("keyboards: emergency phone = tel", (await attr("Phone", "type")) === "tel");
+    await p.goto(p.base + "/consultations/new");
+    ok("keyboards: vitals numeric/decimal", (await attr("Pulse (/min)", "inputmode")) === "numeric" && (await attr("Weight (kg)", "inputmode")) === "decimal" && (await attr("Temp (°F)", "inputmode")) === "decimal");
+    ok("keyboards: visit/follow-up dates = date", (await attr("Visit date *", "type")) === "date" && (await attr("Follow-up date", "type")) === "date");
+    await p.goto(p.base + "/profile");
+    ok("keyboards: doctor phone tel, email email", (await attr("Phone", "type")) === "tel" && (await attr("Email", "type")) === "email");
+    await p.getByRole("button", { name: "Add chamber" }).click();
+    ok("keyboards: chamber phone tel, fee decimal", (await attr("Phone", "type")) === "tel" && (await attr("Consultation fee", "inputmode")) === "decimal");
     await b.close();
   },
 

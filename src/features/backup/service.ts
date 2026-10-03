@@ -49,10 +49,13 @@ export class LocalBackupService implements BackupService {
 
 export const backupService = new LocalBackupService();
 
-export async function exportBackupFile(): Promise<{ name: string; bytes: Uint8Array }> {
-  await updateSettings({ lastBackupAt: new Date().toISOString() });
-  const bytes = await backupService.createBackup();
-  return { name: `petradoc-backup-${new Date().toISOString().slice(0, 10)}.json`, bytes };
+/** Pass a passphrase to get a passphrase-encrypted file (AES-GCM); without one the file is plain readable JSON. */
+export async function exportBackupFile(passphrase?: string): Promise<{ name: string; bytes: Uint8Array }> {
+  const { encryptBackup } = await import("./crypto");
+  const plain = await (async () => { await updateSettings({ lastBackupAt: new Date().toISOString() }); return backupService.createBackup(); })();
+  const date = new Date().toISOString().slice(0, 10);
+  if (passphrase) return { name: `petradoc-backup-${date}.enc.json`, bytes: await encryptBackup(plain, passphrase) };
+  return { name: `petradoc-backup-${date}.json`, bytes: plain };
 }
 
 /** Planned destinations. They report unavailable and never pretend to upload. */

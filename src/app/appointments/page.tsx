@@ -79,7 +79,7 @@ export default function AppointmentsPage() {
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-50 font-bold text-primary-dark" aria-label={`Token ${a.token}`}>{a.token}</div>
                   <div className="min-w-0 flex-1">
-                    <Link href={`/patients/detail?id=${a.patientId}`} className="font-medium">{a.patientName}</Link>
+                    <Link href={`/patients/detail?id=${a.patientId}`} className="inline-flex min-h-[44px] items-center font-medium">{a.patientName}</Link>
                     <div className="truncate text-xs text-muted">{[dName(a.doctorId), cName(a.chamberId), a.notes].filter(Boolean).join(" · ")}</div>
                   </div>
                   <Badge tone={TONE[a.status]}>{LABEL[a.status]}</Badge>
@@ -91,7 +91,7 @@ export default function AppointmentsPage() {
                       href={`/consultations/new?patientId=${a.patientId}&appointmentId=${a.id}&doctorId=${a.doctorId}&chamberId=${a.chamberId}`}>
                       {a.status === "in_consultation" ? "Continue consultation" : "Start consultation"}
                     </Link>
-                    <Button variant="ghost" className="text-danger" onClick={() => change(a, "cancelled")}>Cancel</Button>
+                    <Button variant="ghost" className="text-danger-fg" onClick={() => change(a, "cancelled")}>Cancel</Button>
                   </div>
                 )}
               </li>

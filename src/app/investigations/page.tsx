@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Button, Card, EmptyState, Input, Modal, useToast } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
 import { CATEGORY_SUGGESTIONS, type Panel, type TestDef } from "@/features/investigations/types";
+import { BulkImport } from "@/features/import/BulkImport";
+import { testImport } from "@/features/investigations/import";
 import { newId } from "@/lib/repository";
 import { panelRepo, testRepo } from "@/lib/repositories";
 
@@ -31,7 +33,7 @@ function InvestigationsPage() {
     <div className="space-y-4">
       <h1 className="font-display text-2xl font-bold">Investigations</h1>
       <p className="text-xs text-muted">Your own test list and panels. Nothing is pre-loaded; you can also type a test manually inside a consultation.</p>
-      <Card title="Tests" action={canWrite && <Button onClick={() => { setErr(""); setEditTest({ id: newId(), name: "", category: "" }); }}>Add test</Button>}>
+      <Card title="Tests" action={canWrite && <div className="flex gap-2"><BulkImport kind={testImport} onDone={load} /><Button onClick={() => { setErr(""); setEditTest({ id: newId(), name: "", category: "" }); }}>Add test</Button></div>}>
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search tests" placeholder="Search tests or categories"
           className="mb-3 block min-h-[44px] w-full rounded-lg border border-border bg-surface px-3 text-sm" />
         {tests === null ? <p className="text-sm text-muted">Loading…</p> : shown.length === 0 ? (
@@ -45,7 +47,7 @@ function InvestigationsPage() {
                   <span>{t.name}</span>
                   {canWrite && <span className="flex">
                     <Button variant="ghost" onClick={() => { setErr(""); setEditTest(t); }}>Edit</Button>
-                    <Button variant="ghost" className="text-danger" onClick={async () => { if (confirm(`Delete ${t.name}?`)) { await testRepo.remove(t.id); load(); } }}>Delete</Button>
+                    <Button variant="ghost" className="text-danger-fg" onClick={async () => { if (confirm(`Delete ${t.name}?`)) { await testRepo.remove(t.id); load(); } }}>Delete</Button>
                   </span>}
                 </li>
               ))}
@@ -61,7 +63,7 @@ function InvestigationsPage() {
                 <div><div className="font-medium">{p.name}</div><div className="text-xs text-muted">{p.tests.join(", ")}</div></div>
                 {canWrite && <span className="flex shrink-0">
                   <Button variant="ghost" onClick={() => { setErr(""); setEditPanel(p); }}>Edit</Button>
-                  <Button variant="ghost" className="text-danger" onClick={async () => { if (confirm(`Delete panel ${p.name}?`)) { await panelRepo.remove(p.id); load(); } }}>Delete</Button>
+                  <Button variant="ghost" className="text-danger-fg" onClick={async () => { if (confirm(`Delete panel ${p.name}?`)) { await panelRepo.remove(p.id); load(); } }}>Delete</Button>
                 </span>}
               </li>
             ))}

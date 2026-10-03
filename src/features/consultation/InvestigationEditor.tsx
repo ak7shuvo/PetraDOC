@@ -54,7 +54,7 @@ export function InvestigationEditor({ items, onChange }: { items: OrderedTest[];
             <li key={t.id} className="flex items-end gap-2">
               <div className="flex-1"><Input label={t.name} placeholder="Notes (optional)" value={t.notes}
                 onChange={(e) => onChange(items.map((i) => (i.id === t.id ? { ...i, notes: e.target.value } : i)))} /></div>
-              <Button variant="ghost" className="text-danger" aria-label={`Remove ${t.name}`} onClick={() => onChange(items.filter((i) => i.id !== t.id))}>✕</Button>
+              <Button variant="ghost" className="text-danger-fg" aria-label={`Remove ${t.name}`} onClick={() => onChange(items.filter((i) => i.id !== t.id))}>✕</Button>
             </li>
           ))}
         </ul>

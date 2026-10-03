@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Button, Card, Textarea, useToast } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
 import { BackupCard } from "@/features/backup/BackupCard";
+import { StarterListsCard } from "@/features/settings/StarterListsCard";
 import { LicenseCard } from "@/features/licensing/LicenseCard";
 import { getSettings, updateSettings } from "@/features/settings/service";
 
@@ -20,6 +21,7 @@ export default function SettingsPage() {
           <Button onClick={async () => { await updateSettings({ prescriptionFooter: footer }); toast("Settings saved"); }}>Save</Button>
         </fieldset>
       </Card>
+      <StarterListsCard />
       <BackupCard />
       <LicenseCard />
     </div>

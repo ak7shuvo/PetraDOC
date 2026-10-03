@@ -35,7 +35,7 @@ function Inner() {
   }, [id]);
 
   if (p === undefined) return <p className="text-sm text-muted">Loading…</p>;
-  if (p === null) return <p className="text-sm text-danger">Patient not found. <Link href="/patients" className="underline">Back to patients</Link></p>;
+  if (p === null) return <p className="text-sm text-danger-fg">Patient not found. <Link href="/patients" className="underline">Back to patients</Link></p>;
 
   const events = [
     ...(clinical ? history : []).map((c) => ({ key: c.id, date: c.date, sub: c.rxCode, title: c.diagnosis || c.chiefComplaint || "Consultation", href: `/prescriptions/view?id=${c.id}`, note: c.followUpDate ? `Follow-up: ${c.followUpDate}` : "" })),
@@ -73,7 +73,7 @@ function Inner() {
             {events.map((e) => (
               <li key={e.key}>
                 <div className="text-xs text-muted">{e.date}{e.sub && ` · ${e.sub}`}</div>
-                {e.href ? <Link href={e.href} className="text-sm font-medium text-primary underline">{e.title}</Link> : <div className="text-sm font-medium">{e.title}</div>}
+                {e.href ? <Link href={e.href} className="inline-flex min-h-[44px] items-center text-sm font-medium text-primary underline">{e.title}</Link> : <div className="text-sm font-medium">{e.title}</div>}
                 {e.note && <div className="text-xs text-muted">{e.note}</div>}
               </li>
             ))}
@@ -81,12 +81,12 @@ function Inner() {
         )}
       </Card>
       {canDelete && (
-        <div className="print:hidden"><Button variant="ghost" className="text-danger" onClick={() => setConfirmDelete(true)}>Delete patient…</Button></div>
+        <div className="print:hidden"><Button variant="ghost" className="text-danger-fg" onClick={() => setConfirmDelete(true)}>Delete patient…</Button></div>
       )}
       <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title="Delete patient?">
         <div className="space-y-3 text-sm">
           <p>This permanently deletes <b>{p.name}</b> ({p.code}) together with {history.length} consultation(s) and {appts.length + history.filter((h) => h.appointmentId).length} appointment(s).</p>
-          <p className="font-medium text-danger">Data is stored only in this browser. There is no recycle bin; the only way to undo this is to restore a backup file you exported earlier.</p>
+          <p className="font-medium text-danger-fg">Data is stored only in this browser. There is no recycle bin; the only way to undo this is to restore a backup file you exported earlier.</p>
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setConfirmDelete(false)}>Cancel</Button>
             <Button variant="danger" onClick={async () => { await deletePatient(p.id); toast("Patient deleted"); router.push("/patients"); }}>Delete permanently</Button>

@@ -30,7 +30,7 @@ export function PatientPicker({ value, onChange, error }: { value: string; onCha
       <input id="pp" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, mobile or Patient ID"
         aria-invalid={error ? true : undefined}
         className={`block min-h-[44px] w-full rounded-lg border bg-surface px-3 text-sm ${error ? "border-danger" : "border-border"}`} />
-      {error && <p role="alert" className="mt-1 text-xs text-danger">{error}</p>}
+      {error && <p role="alert" className="mt-1 text-xs text-danger-fg">{error}</p>}
       {rows.length > 0 && (
         <ul className="mt-1 divide-y divide-border rounded-lg border border-border bg-surface">
           {rows.map((p) => (

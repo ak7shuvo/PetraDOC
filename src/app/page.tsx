@@ -37,8 +37,15 @@ export default function Dashboard() {
   const [doctors, setDoctors] = useState<DoctorProfile[]>([]);
   const [doctorId, setDoctorId] = useState("");
   const clinical = useCan("clinical:read");
-  const [lastBackup, setLastBackup] = useState<string | null | undefined>(undefined);
-  useEffect(() => { getSettings().then((x) => setLastBackup(x.lastBackupAt ?? null)); }, []);
+  // undefined = loading, null = never backed up, number = days since last backup (0 = within 7 days, no reminder)
+  const [backupAge, setBackupAge] = useState<number | null | undefined>(undefined);
+  useEffect(() => {
+    getSettings().then((x) => {
+      if (!x.lastBackupAt) return setBackupAge(null);
+      const days = Math.floor((Date.now() - new Date(x.lastBackupAt).getTime()) / 86400000);
+      setBackupAge(days >= 7 ? days : 0);
+    });
+  }, []);
   useEffect(() => { listDoctors().then(setDoctors); }, []);
   useEffect(() => { load(doctorId).then(setS).catch(() => setS(null)); }, [doctorId]);
 
@@ -56,9 +63,10 @@ export default function Dashboard() {
             onChange={(e) => setDoctorId(doctors.find((d) => doctorLabel(d) === e.target.value)?.id ?? "")} />
         )}
       </div>
-      {lastBackup === null && s && s.patients > 0 && (
-        <p role="note" className="rounded-lg bg-amber-50 p-3 text-sm text-warning">
-          Your data is stored only in this browser and has never been backed up. <Link href="/settings" className="font-medium underline">Export a backup</Link>.
+      {backupAge !== undefined && backupAge !== 0 && s && s.patients > 0 && (
+        <p role="note" className="rounded-lg bg-amber-50 p-3 text-sm text-warning-fg">
+          Your data is stored only in this browser and {backupAge === null ? "has never been backed up" : `was last backed up ${backupAge} days ago`}.{" "}
+          <Link href="/settings" className="inline-flex min-h-[44px] items-center font-medium underline">Export a backup</Link>.
         </p>
       )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -74,7 +82,7 @@ export default function Dashboard() {
           <Link href="/patients" className={linkButtonClass("secondary")}>Find patient</Link>
         </div>
       </Card>
-      <Card title="Today's queue" action={<Link href="/appointments" className="text-sm text-primary underline">Open queue</Link>}>
+      <Card title="Today's queue" action={<Link href="/appointments" className="inline-flex min-h-[44px] items-center text-sm text-primary underline">Open queue</Link>}>
         {waiting.length === 0 ? <EmptyState title="No one in the queue" hint="Appointments booked for today appear here." /> : (
           <ul className="divide-y divide-border">
             {waiting.slice(0, 6).map((a) => (

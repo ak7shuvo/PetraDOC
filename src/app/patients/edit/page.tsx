@@ -10,7 +10,7 @@ function Inner() {
   const [p, setP] = useState<Patient | null | undefined>(undefined);
   useEffect(() => { if (id) patientRepo.get(id).then(setP); else setP(null); }, [id]);
   if (p === undefined) return <p className="text-sm text-muted">Loading…</p>;
-  if (p === null) return <p className="text-sm text-danger">Patient not found.</p>;
+  if (p === null) return <p className="text-sm text-danger-fg">Patient not found.</p>;
   return <PatientForm patient={p} />;
 }
 

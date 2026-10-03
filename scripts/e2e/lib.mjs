@@ -73,3 +73,36 @@ export async function seedViaBackup(p, data, file = "/tmp/e2e-seed.json") {
   await p.getByRole("button", { name: "Replace data and restore" }).click();
   await p.waitForTimeout(2500);
 }
+
+const FIRST = ["Rahim", "Karim", "Ayesha", "Fatima", "Nusrat", "Imran", "Sadia", "Tanvir", "Mitu", "Rafiq", "Salma", "Jamal", "Rina", "Hasan", "Lipi"];
+const LAST = ["Uddin", "Hossain", "Begum", "Khan", "Akter", "Ahmed", "Chowdhury", "Islam", "Sarker", "Mia"];
+const dateOf = (offsetDays) => new Date(Date.now() - offsetDays * 86400000).toISOString().slice(0, 10);
+const blankPatient = { dob: "", approxAge: "30", gender: "Male", address: "Dhaka", bloodGroup: "", occupation: "", emergencyName: "", emergencyPhone: "", emergencyRelation: "", allergies: "", medicalHistory: "", notes: "" };
+
+/** Deterministic demo/scale data in backup format. */
+export function genData({ patients = 5, consultations = 8, appointmentsToday = 4 } = {}) {
+  const now = new Date().toISOString();
+  const t = { createdAt: now, updatedAt: now };
+  const doctors = [{ id: "d1", name: "Anika Rahman", title: "Dr.", gender: "Female", phone: "01700000000", email: "", address: "", specialty: "Medicine", subSpecialty: "", bmdcNumber: "A-12345", experienceYears: "10", position: "", department: "", expertise: "", languages: "", education: [{ id: "e1", degree: "MBBS", institution: "DMC", passingYear: "2012", specialty: "" }], training: [], experience: [], ...t }];
+  const chambers = [{ id: "ch1", doctorId: "d1", name: "City Clinic", address: "Road 1", phone: "01711111111", visitingHours: "5pm-9pm", fee: "500", ...t }];
+  const pts = Array.from({ length: patients }, (_, i) => ({
+    id: `p${i}`, code: `PD-${String(i + 1).padStart(6, "0")}`, name: `${FIRST[i % FIRST.length]} ${LAST[Math.floor(i / FIRST.length) % LAST.length]} ${i}`,
+    mobile: `01${7 + (i % 3)}${String(10000000 + i * 37).slice(0, 8)}`, ...blankPatient, ...t,
+    updatedAt: new Date(Date.now() - i * 1000).toISOString(),
+  }));
+  const cons = Array.from({ length: consultations }, (_, i) => ({
+    id: `c${i}`, rxCode: `RX-${String(i + 1).padStart(6, "0")}`, patientId: `p${i % patients}`, doctorId: "d1", chamberId: "ch1", date: dateOf(i % 365),
+    chiefComplaint: "Fever", history: "", examination: "", diagnosis: "Viral fever", advice: "Rest", followUpNotes: "",
+    followUpDate: i % 10 === 0 ? dateOf(-7) : undefined,
+    vitals: { bp: "120/80", pulse: "80", temperature: "99", spo2: "98", respiratoryRate: "16", weight: "70", height: "170", bmi: "24.2" },
+    medicines: [{ id: `m${i}a`, name: "Napa", strength: "500 mg", dose: "1", frequency: "1+0+1", route: "Oral", duration: "5 days", instructions: "" }],
+    investigations: [{ id: `t${i}a`, name: "CBC", notes: "" }], ...t,
+  }));
+  const appts = Array.from({ length: appointmentsToday }, (_, i) => ({
+    id: `a${i}`, patientId: `p${i % patients}`, doctorId: "d1", chamberId: "ch1", date: dateOf(0), token: i + 1,
+    status: ["scheduled", "waiting", "in_consultation", "done"][i % 4], notes: "", ...t,
+  }));
+  const medicines = [["Paracetamol", "Napa"], ["Omeprazole", "Seclo"], ["Cetirizine", "Alatrol"]].map(([generic, brand], i) => ({ id: `med${i}`, generic, brand, strength: "10 mg", form: "Tablet", route: "Oral", manufacturer: "ACME", favourite: i === 0, ...t }));
+  const tests = [["CBC", "Haematology"], ["ESR", "Haematology"], ["Creatinine", "Biochemistry"]].map(([name, category], i) => ({ id: `tst${i}`, name, category, ...t }));
+  return { doctors, chambers, patients: pts, consultations: cons, appointments: appts, medicines, tests, panels: [{ id: "pn1", name: "Fever", tests: ["CBC", "ESR"], ...t }], rxTemplates: [{ id: "tp1", name: "Fever template", items: [], ...t }] };
+}

@@ -26,7 +26,7 @@ export function RepeatableList<T extends { id: string }>({
                 value={String(it[f.key] ?? "")} onChange={(e) => update(it.id, f.key, e.target.value)} />
             ))}
           </div>
-          <Button variant="ghost" className="mt-2 text-danger" onClick={() => onChange(items.filter((i) => i.id !== it.id))}>
+          <Button variant="ghost" className="mt-2 text-danger-fg" onClick={() => onChange(items.filter((i) => i.id !== it.id))}>
             Remove {itemLabel.toLowerCase()} {n + 1}
           </Button>
         </fieldset>

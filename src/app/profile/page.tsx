@@ -1,16 +1,17 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Button, Card, Input, PhotoField, RepeatableList, Select, Textarea, useToast } from "@/components/ui";
+import { Button, Card, Input, Modal, PhotoField, RepeatableList, Select, Textarea, useToast } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
 import { ChamberManager } from "@/features/doctor-profile/ChamberManager";
 import { PrescriptionHeaderPreview } from "@/features/doctor-profile/PrescriptionHeaderPreview";
-import { addDoctor, doctorLabel, listChambers, listDoctors, loadProfile, saveProfile } from "@/features/doctor-profile/service";
+import { addDoctor, deleteDoctor, doctorDeleteBlockers, doctorLabel, listChambers, listDoctors, loadProfile, saveProfile } from "@/features/doctor-profile/service";
 import { emptyProfile, type Chamber, type DoctorProfile } from "@/features/doctor-profile/types";
 
 export default function ProfilePage() {
   const [p, setP] = useState<DoctorProfile>(emptyProfile());
   const [doctors, setDoctors] = useState<DoctorProfile[]>([]);
   const [doctorId, setDoctorId] = useState("");
+  const [deleting, setDeleting] = useState<string[] | null>(null);
   const [chambers, setChambers] = useState<Chamber[]>([]);
   const [chamberId, setChamberId] = useState("");
   const [error, setError] = useState("");
@@ -47,9 +48,10 @@ export default function ProfilePage() {
         <Select label="Doctor" placeholder="Choose doctor" options={doctors.map((d) => doctorLabel(d))}
           value={doctors.find((d) => d.id === doctorId) ? doctorLabel(doctors.find((d) => d.id === doctorId)!) : ""}
           onChange={(e) => { const d = doctors.find((x) => doctorLabel(x) === e.target.value); if (d) setDoctorId(d.id); }} />
+        {canEdit && <Button variant="ghost" className="text-danger-fg" onClick={async () => setDeleting(await doctorDeleteBlockers(doctorId))}>Delete doctor…</Button>}
         {canEdit && <Button variant="secondary" onClick={async () => { const d = await addDoctor(); setDoctors(await listDoctors()); setDoctorId(d.id); toast("Doctor added. Fill in the profile and save."); }}>Add doctor</Button>}
       </div>
-      {!canEdit && <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning">Read-only for the active role. Switch to Doctor or Admin to edit.</p>}
+      {!canEdit && <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning-fg">Read-only for the active role. Switch to Doctor or Admin to edit.</p>}
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <fieldset disabled={!canEdit} className="min-w-0 space-y-4">
           <Card title="Personal">
@@ -109,6 +111,27 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
+      <Modal open={deleting !== null} onClose={() => setDeleting(null)} title="Delete doctor?">
+        {deleting && (
+          <div className="space-y-3 text-sm">
+            {deleting.length > 0 ? (
+              <>
+                <p className="font-medium text-danger-fg">This doctor cannot be deleted:</p>
+                <ul className="list-disc space-y-1 pl-5">{deleting.map((r) => <li key={r}>{r}</li>)}</ul>
+              </>
+            ) : (
+              <p>This permanently deletes <b>{doctorLabel(p)}</b> and their chambers. This cannot be undone without a backup.</p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setDeleting(null)}>{deleting.length ? "Close" : "Cancel"}</Button>
+              {deleting.length === 0 && <Button variant="danger" onClick={async () => {
+                if ((await deleteDoctor(doctorId)).length) return;
+                const d = await listDoctors(); setDoctors(d); setDoctorId(d[0].id); setDeleting(null); toast("Doctor deleted");
+              }}>Delete permanently</Button>}
+            </div>
+          </div>
+        )}
+      </Modal>
       <ChamberManager doctorId={doctorId} chambers={chambers} onChanged={refreshChambers} canEdit={canEdit} />
     </div>
   );

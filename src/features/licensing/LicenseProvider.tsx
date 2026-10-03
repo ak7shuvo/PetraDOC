@@ -18,7 +18,7 @@ export function LicenseBanner() {
   const { status, refresh } = useLicense();
   if (!status || status.state === "ACTIVE") return null;
   const s = status.state;
-  const tone = s === "TRIAL" ? "bg-teal-50 text-primary-dark" : "bg-amber-50 text-warning";
+  const tone = s === "TRIAL" ? "bg-teal-50 text-primary-dark" : "bg-amber-50 text-warning-fg";
   return (
     <div role="status" className={`flex flex-wrap items-center gap-2 px-4 py-2 text-sm print:hidden ${tone}`}>
       {s === "TRIAL" && <span>Trial: {status.trialDaysLeft} day(s) left. Local trial only.</span>}

@@ -23,7 +23,7 @@ function Inner() {
   const target = PAPERS[paper];
   useEffect(() => { if (id) loadPrescription(id).then(setD); else setD(null); }, [id]);
   if (d === undefined) return <p className="text-sm text-muted">Loading…</p>;
-  if (d === null) return <p className="text-sm text-danger">Prescription not found.</p>;
+  if (d === null) return <p className="text-sm text-danger-fg">Prescription not found.</p>;
 
   const pdf = async () => {
     const el = document.getElementById("rx-print");

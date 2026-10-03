@@ -10,8 +10,11 @@ const bengali = Noto_Sans_Bengali({ subsets: ["bengali"], variable: "--font-beng
 export const metadata: Metadata = {
   title: "PetraDOC",
   description: "Doctor practice, patient record & prescription management",
+  manifest: "/manifest.webmanifest",
+  icons: { icon: [{ url: "/icon.svg", type: "image/svg+xml" }, { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }], apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "PetraDOC", statusBarStyle: "default" },
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0F766E" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0F766E", viewportFit: "cover" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
