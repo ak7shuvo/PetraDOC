@@ -1,4 +1,5 @@
 "use client";
+import { RequirePermission } from "@/features/auth/RoleProvider";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ConsultationForm } from "@/features/consultation/ConsultationForm";
@@ -14,11 +15,15 @@ function Inner() {
   return <ConsultationForm initial={c} />;
 }
 
-export default function EditConsultationPage() {
+function EditConsultationPage() {
   return (
     <div className="space-y-4">
       <h1 className="font-display text-2xl font-bold">Edit consultation</h1>
       <Suspense fallback={null}><Inner /></Suspense>
     </div>
   );
+}
+
+export default function GuardedEditConsultationPage() {
+  return <RequirePermission permission="clinical:read"><EditConsultationPage /></RequirePermission>;
 }

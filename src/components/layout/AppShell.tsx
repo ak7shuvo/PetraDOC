@@ -3,27 +3,40 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { NAV_ITEMS } from "@/lib/nav";
-import { RoleProvider, RoleSelector } from "@/features/auth/RoleProvider";
+import { can } from "@/features/auth/permissions";
+import { RoleProvider, RoleSelector, useRole } from "@/features/auth/RoleProvider";
+import { LicenseBanner, LicenseProvider } from "@/features/licensing/LicenseProvider";
 import { Modal, ToastProvider } from "@/components/ui";
 
 const active = (path: string, href: string) => (href === "/" ? path === "/" : path.startsWith(href));
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <LicenseProvider>
+      <RoleProvider>
+        <ToastProvider><Shell>{children}</Shell></ToastProvider>
+      </RoleProvider>
+    </LicenseProvider>
+  );
+}
+
+function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const { role } = useRole();
   const [more, setMore] = useState(false);
-  const primary = NAV_ITEMS.filter((i) => i.primary);
-  const secondary = NAV_ITEMS.filter((i) => !i.primary);
+  const items = NAV_ITEMS.filter((i) => !i.perm || can(role, i.perm));
+  const primary = items.filter((i) => i.primary);
+  const secondary = items.filter((i) => !i.primary);
   const link = (cur: boolean) =>
     `flex min-h-[44px] items-center rounded-lg px-3 text-sm ${cur ? "bg-teal-50 font-medium text-primary-dark" : "text-ink hover:bg-surface-2"}`;
 
   return (
-    <RoleProvider>
-      <ToastProvider>
+    <>
         <div className="min-h-screen md:flex">
           <aside className="hidden print:!hidden w-60 shrink-0 flex-col gap-4 border-r border-border bg-surface p-4 md:flex">
             <div className="font-display text-xl font-bold text-primary">PetraDOC</div>
             <nav aria-label="Main" className="flex flex-1 flex-col gap-1">
-              {NAV_ITEMS.map((i) => (
+              {items.map((i) => (
                 <Link key={i.href} href={i.href} aria-current={active(path, i.href) ? "page" : undefined} className={link(active(path, i.href))}>
                   {i.label}
                 </Link>
@@ -38,6 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 More
               </button>
             </header>
+            <LicenseBanner />
             <main className="mx-auto max-w-5xl p-4 pb-24 md:p-8 md:pb-8 print:max-w-none print:p-0">{children}</main>
           </div>
           <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-10 flex border-t border-border bg-surface md:hidden print:hidden">
@@ -59,7 +73,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </Modal>
         </div>
-      </ToastProvider>
-    </RoleProvider>
+    </>
   );
 }

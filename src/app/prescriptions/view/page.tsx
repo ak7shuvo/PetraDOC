@@ -1,4 +1,5 @@
 "use client";
+import { RequirePermission } from "@/features/auth/RoleProvider";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -57,6 +58,10 @@ function Inner() {
   );
 }
 
-export default function PrescriptionViewPage() {
+function PrescriptionViewPage() {
   return <Suspense fallback={null}><Inner /></Suspense>;
+}
+
+export default function GuardedPrescriptionViewPage() {
+  return <RequirePermission permission="clinical:read"><PrescriptionViewPage /></RequirePermission>;
 }

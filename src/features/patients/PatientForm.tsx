@@ -13,6 +13,7 @@ export function PatientForm({ patient }: { patient?: Patient }) {
   const router = useRouter();
   const toast = useToast();
   const canWrite = useCan("patient:write");
+  const clinical = useCan("clinical:read");
 
   const set = (k: keyof PatientInput, val: string | undefined) => setV((s) => ({ ...s, [k]: val }));
   const t = (k: keyof PatientInput, label: string, extra: object = {}) => (
@@ -35,7 +36,7 @@ export function PatientForm({ patient }: { patient?: Patient }) {
     }
   };
 
-  if (!canWrite) return <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning">The active role cannot edit patients.</p>;
+  if (!canWrite) return <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning">Editing is unavailable: your role or license does not allow it.</p>;
   return (
     <form onSubmit={submit} noValidate className="space-y-4">
       {patient && <p className="text-sm text-muted">Patient ID: <span className="font-medium text-ink">{patient.code}</span></p>}
@@ -61,13 +62,13 @@ export function PatientForm({ patient }: { patient?: Patient }) {
           {t("emergencyRelation", "Relation")}
         </div>
       </Card>
-      <Card title="Medical">
+      {clinical && <Card title="Medical">
         <div className="space-y-3">
           <Textarea label="Allergies" value={v.allergies} onChange={(e) => set("allergies", e.target.value)} />
           <Textarea label="Medical history" value={v.medicalHistory} onChange={(e) => set("medicalHistory", e.target.value)} />
           <Textarea label="Notes" value={v.notes} onChange={(e) => set("notes", e.target.value)} />
         </div>
-      </Card>
+      </Card>}
       <div className="flex gap-2">
         <Button type="submit" disabled={busy}>{patient ? "Save changes" : "Create patient"}</Button>
         <Button variant="secondary" onClick={() => router.back()}>Cancel</Button>

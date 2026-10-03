@@ -18,3 +18,6 @@ export const rxTemplateRepo = new DexieRepository<RxTemplate>("rxTemplates", (t)
 import type { Panel, TestDef } from "@/features/investigations/types";
 export const testRepo = new DexieRepository<TestDef>("tests", (t) => `${t.name} ${t.category}`);
 export const panelRepo = new DexieRepository<Panel>("panels", (p) => p.name);
+import type { BaseEntity } from "./repository";
+import type { LicenseInfo } from "@/features/licensing/types";
+export const licenseRepo = new DexieRepository<LicenseInfo & BaseEntity>("licenses");

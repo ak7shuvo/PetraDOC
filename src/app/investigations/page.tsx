@@ -1,4 +1,5 @@
 "use client";
+import { RequirePermission } from "@/features/auth/RoleProvider";
 import { useCallback, useEffect, useState } from "react";
 import { Button, Card, EmptyState, Input, Modal, useToast } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
@@ -6,7 +7,7 @@ import { CATEGORY_SUGGESTIONS, type Panel, type TestDef } from "@/features/inves
 import { newId } from "@/lib/repository";
 import { panelRepo, testRepo } from "@/lib/repositories";
 
-export default function InvestigationsPage() {
+function InvestigationsPage() {
   const [tests, setTests] = useState<TestDef[] | null>(null);
   const [panels, setPanels] = useState<Panel[]>([]);
   const [q, setQ] = useState("");
@@ -104,4 +105,8 @@ export default function InvestigationsPage() {
       </Modal>
     </div>
   );
+}
+
+export default function GuardedInvestigationsPage() {
+  return <RequirePermission permission="clinical:read"><InvestigationsPage /></RequirePermission>;
 }

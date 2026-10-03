@@ -7,6 +7,7 @@ import type { Appointment } from "@/features/appointments/types";
 import type { Consultation } from "@/features/consultation/types";
 import { doctorLabel, listDoctors } from "@/features/doctor-profile/service";
 import type { DoctorProfile } from "@/features/doctor-profile/types";
+import { useCan } from "@/features/auth/RoleProvider";
 import { localDate } from "@/lib/date";
 import { appointmentRepo, consultationRepo, patientRepo } from "@/lib/repositories";
 
@@ -34,6 +35,7 @@ export default function Dashboard() {
   const [s, setS] = useState<Stats | null>(null);
   const [doctors, setDoctors] = useState<DoctorProfile[]>([]);
   const [doctorId, setDoctorId] = useState("");
+  const clinical = useCan("clinical:read");
   useEffect(() => { listDoctors().then(setDoctors); }, []);
   useEffect(() => { load(doctorId).then(setS).catch(() => setS(null)); }, [doctorId]);
 
@@ -41,7 +43,7 @@ export default function Dashboard() {
   const cards: [string, number | undefined][] = [
     ["Today's appointments", s?.today.length], ["Patients", s?.patients],
     ["Recent consultations", s?.recent.length], ["Pending follow-ups", s?.followUps],
-  ];
+  ].filter(([l]) => clinical || l !== "Recent consultations") as [string, number | undefined][];
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -59,7 +61,7 @@ export default function Dashboard() {
       <Card title="Quick actions">
         <div className="flex flex-wrap gap-2">
           <Link href="/patients/new" className={linkButtonClass()}>New patient</Link>
-          <Link href="/consultations/new" className={linkButtonClass("secondary")}>New consultation</Link>
+          {clinical && <Link href="/consultations/new" className={linkButtonClass("secondary")}>New consultation</Link>}
           <Link href="/appointments" className={linkButtonClass("secondary")}>Book appointment</Link>
           <Link href="/patients" className={linkButtonClass("secondary")}>Find patient</Link>
         </div>
@@ -77,7 +79,7 @@ export default function Dashboard() {
           </ul>
         )}
       </Card>
-      <Card title="Recent consultations">
+      {clinical && <Card title="Recent consultations">
         {s && s.recent.length === 0 ? <EmptyState title="No consultations yet" hint="Saved consultations appear here." /> : (
           <ul className="divide-y divide-border">
             {s?.recent.map((c) => (
@@ -89,7 +91,7 @@ export default function Dashboard() {
             ))}
           </ul>
         )}
-      </Card>
+      </Card>}
     </div>
   );
 }

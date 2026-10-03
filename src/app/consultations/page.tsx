@@ -1,4 +1,5 @@
 "use client";
+import { RequirePermission } from "@/features/auth/RoleProvider";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Card, EmptyState, linkButtonClass } from "@/components/ui";
@@ -6,7 +7,7 @@ import { useCan } from "@/features/auth/RoleProvider";
 import type { Consultation } from "@/features/consultation/types";
 import { consultationRepo, patientRepo } from "@/lib/repositories";
 
-export default function ConsultationsPage() {
+function ConsultationsPage() {
   const [rows, setRows] = useState<(Consultation & { patientName: string })[] | null>(null);
   const canWrite = useCan("consultation:write");
   useEffect(() => {
@@ -39,4 +40,8 @@ export default function ConsultationsPage() {
       )}
     </div>
   );
+}
+
+export default function GuardedConsultationsPage() {
+  return <RequirePermission permission="clinical:read"><ConsultationsPage /></RequirePermission>;
 }

@@ -54,7 +54,7 @@ export function ConsultationForm({ initial }: { initial: Consultation }) {
     } catch { toast("Could not save consultation", "error"); setBusy(false); }
   };
 
-  if (!canWrite) return <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning">The active role cannot record consultations.</p>;
+  if (!canWrite) return <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning">Recording consultations is unavailable: your role or license does not allow it.</p>;
   return (
     <form onSubmit={submit} noValidate className="space-y-4">
       <Card title="Visit">

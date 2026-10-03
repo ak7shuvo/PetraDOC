@@ -45,4 +45,12 @@ export class DexieRepository<T extends BaseEntity> implements Repository<T> {
   async remove(id: string) {
     await this.t().delete(id);
   }
+
+  async clear() {
+    await this.t().clear();
+  }
+
+  async importMany(entities: T[]) {
+    await this.t().bulkPut(entities);
+  }
 }

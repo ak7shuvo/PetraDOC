@@ -1,7 +1,8 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Role } from "@/types/roles";
-import { can, ROLE_LABELS, type Permission } from "./permissions";
+import { useLicense } from "@/features/licensing/LicenseProvider";
+import { can, isWritePermission, ROLE_LABELS, type Permission } from "./permissions";
 
 const KEY = "petradoc.activeRole";
 const Ctx = createContext<{ role: Role; setRole: (r: Role) => void }>({ role: "DOCTOR", setRole: () => {} });
@@ -22,7 +23,20 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useRole = () => useContext(Ctx);
-export const useCan = (p: Permission) => can(useContext(Ctx).role, p);
+/** Role permission AND, for data-changing permissions, a license that allows writing. */
+export function useCan(p: Permission) {
+  const { role } = useRole();
+  const { canWrite } = useLicense();
+  return can(role, p) && (!isWritePermission(p) || canWrite);
+}
+
+export function RequirePermission({ permission, children }: { permission: Permission; children: React.ReactNode }) {
+  const { role } = useRole();
+  if (!can(role, permission)) {
+    return <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning">The active role ({ROLE_LABELS[role]}) does not have access to this page.</p>;
+  }
+  return <>{children}</>;
+}
 
 /** Local-only role switcher. NOT a login: real authentication is pending. */
 export function RoleSelector() {

@@ -19,6 +19,9 @@
 | 2026-10-03 | 8 | typecheck, build | PASS |
 | 2026-10-03 | 8 | Headless smoke: PDF download (A4 + thermal 80, valid %PDF), thermal width 302px (80mm), print media hides nav/toolbar, PDF page visually inspected | PASS |
 | 2026-10-03 | 8 | Real printers (A4/thermal via OS drivers), PDF in Acrobat/phone viewers | NOT RUN |
+| 2026-10-03 | 9 | typecheck, build (with test public key) | PASS |
+| 2026-10-03 | 9 | Headless smoke: read-only before trial; trial; garbage/forged/expired keys rejected; valid signed key → ACTIVE; backup export, restore replaces data, bad file rejected; Receptionist nav/pages/detail restricted | PASS |
+| 2026-10-03 | 9 | No license server, no revocation source, trial is local/tamper-able, backup unencrypted, role gating UI-only | KNOWN LIMITATION |
 | 2026-10-03 | 1-3 | Real-device touch/keyboard/a11y review, photo upload via file picker, Android/iOS browsers | NOT RUN |
 
 ## Known issues

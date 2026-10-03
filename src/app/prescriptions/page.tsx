@@ -1,11 +1,12 @@
 "use client";
+import { RequirePermission } from "@/features/auth/RoleProvider";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Card, EmptyState } from "@/components/ui";
 import type { Consultation } from "@/features/consultation/types";
 import { consultationRepo, patientRepo } from "@/lib/repositories";
 
-export default function PrescriptionsPage() {
+function PrescriptionsPage() {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<(Consultation & { patientName: string })[] | null>(null);
   useEffect(() => {
@@ -39,4 +40,8 @@ export default function PrescriptionsPage() {
       )}
     </div>
   );
+}
+
+export default function GuardedPrescriptionsPage() {
+  return <RequirePermission permission="clinical:read"><PrescriptionsPage /></RequirePermission>;
 }

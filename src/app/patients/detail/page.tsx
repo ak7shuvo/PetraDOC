@@ -20,6 +20,7 @@ function Inner() {
   const [appts, setAppts] = useState<Appointment[]>([]);
   const canWrite = useCan("patient:write");
   const canConsult = useCan("consultation:write");
+  const clinical = useCan("clinical:read");
 
   useEffect(() => {
     if (!id) return setP(null);
@@ -32,7 +33,7 @@ function Inner() {
   if (p === null) return <p className="text-sm text-danger">Patient not found. <Link href="/patients" className="underline">Back to patients</Link></p>;
 
   const events = [
-    ...history.map((c) => ({ key: c.id, date: c.date, sub: c.rxCode, title: c.diagnosis || c.chiefComplaint || "Consultation", href: `/prescriptions/view?id=${c.id}`, note: c.followUpDate ? `Follow-up: ${c.followUpDate}` : "" })),
+    ...(clinical ? history : []).map((c) => ({ key: c.id, date: c.date, sub: c.rxCode, title: c.diagnosis || c.chiefComplaint || "Consultation", href: `/prescriptions/view?id=${c.id}`, note: c.followUpDate ? `Follow-up: ${c.followUpDate}` : "" })),
     ...appts.map((a) => ({ key: a.id, date: a.date, sub: `Token ${a.token}`, title: `Appointment (${a.status.replace("_", " ")})`, href: "", note: a.notes })),
   ].sort((a, b) => b.date.localeCompare(a.date));
   return (
@@ -43,7 +44,7 @@ function Inner() {
           <div className="min-w-0 flex-1">
             <h1 className="truncate font-display text-xl font-bold">{p.name}</h1>
             <div className="text-sm text-muted">{[p.code, patientAge(p), p.gender, p.bloodGroup].filter(Boolean).join(" · ")}</div>
-            {p.allergies && <div className="mt-1"><Badge tone="danger">Allergies: {p.allergies}</Badge></div>}
+            {clinical && p.allergies && <div className="mt-1"><Badge tone="danger">Allergies: {p.allergies}</Badge></div>}
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             {canConsult && <Link href={`/consultations/new?patientId=${p.id}`} className={linkButtonClass()}>New consultation</Link>}
@@ -56,7 +57,7 @@ function Inner() {
           <Row k="Mobile" v={p.mobile} /><Row k="Date of birth" v={p.dob} /><Row k="Occupation" v={p.occupation} />
           <Row k="Address" v={p.address} />
           <Row k="Emergency contact" v={[p.emergencyName, p.emergencyRelation && `(${p.emergencyRelation})`, p.emergencyPhone].filter(Boolean).join(" ")} />
-          <Row k="Medical history" v={p.medicalHistory} /><Row k="Notes" v={p.notes} />
+          {clinical && <><Row k="Medical history" v={p.medicalHistory} /><Row k="Notes" v={p.notes} /></>}
         </dl>
       </Card>
       <Card title="History timeline">

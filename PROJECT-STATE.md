@@ -1,7 +1,7 @@
 # PROJECT STATE
 
 ## Current phase
-Phases 1-8 complete. Phase 9 (backup/restore, licensing, security) is next.
+Phases 1-9 complete. Phase 10 (final integration, audit triage, patient delete, README) is next.
 
 ## Completed
 - Scaffold verified: `npm install`, `npm run typecheck`, `npm run build` all pass.
@@ -19,6 +19,7 @@ Phases 1-8 complete. Phase 9 (backup/restore, licensing, security) is next.
 - Phase 6: Investigation database with categories, custom panels, ordering in consultations (search, panel, manual entry, notes), shown on prescription. Empty by default.
 - Phase 7: Appointments with per-doctor/chamber/day token, queue statuses (scheduled → waiting → in consultation → done / cancelled), start-consultation from queue (auto-marks done on save), follow-up tracking (overdue/upcoming, book from follow-up), multiple doctors (profile switcher, per-doctor chambers, doctor filter on dashboard/queue), dashboard counts and patient timeline now include appointments and consultations. Doctors cannot yet be deleted.
 - Phase 8: Prescription output: A4 browser print (print CSS hides app chrome), real PDF download, 58mm/80mm thermal layouts, `PrinterAdapter` seam with a real BrowserPrinterAdapter and explicitly-unavailable Bluetooth/USB/LAN adapters (documented in docs/NATIVE-INTEGRATION.md). Dependencies added: `jspdf` + `html2canvas` (both dynamically imported only on 'Download PDF'): needed to produce a real PDF file in-browser that renders Bengali/any web font correctly; the alternative (vector PDF libraries) requires bundling and shaping Bengali fonts manually.
+- Phase 9: **Backup/restore** (versioned JSON export/import through repositories, validated before replacing data, license excluded, warning that data lives only in this browser + last-backup date; Google Drive is an explicit unavailable destination). **Licensing** (UNACTIVATED/TRIAL/ACTIVE/EXPIRED/REVOKED/INVALID; `LicenseRepository` (Dexie), `LicenseValidator` (ECDSA P-256 signature verification with a build-time public key from `NEXT_PUBLIC_LICENSE_PUBLIC_KEY`, no hardcoded key), service, banner, Settings card; separate from Doctor Profile; writes are blocked unless TRIAL/ACTIVE; vendor tool `scripts/license-tool.mjs`). **Roles**: matrix extended (clinical:read, backup/license manage, patient:delete); Receptionist/Admin cannot see clinical pages/data; nav filtered; UI-only gating.
 
 ## Remaining
 - Phases 4-10 per master prompt.

@@ -1,4 +1,5 @@
 "use client";
+import { RequirePermission } from "@/features/auth/RoleProvider";
 import { useCallback, useEffect, useState } from "react";
 import { Badge, Button, Card, EmptyState, Input, Modal, Select, useToast } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
@@ -6,7 +7,7 @@ import { emptyMedicine, FORMS, medicineLabel, ROUTES, type Medicine } from "@/fe
 import { newId } from "@/lib/repository";
 import { medicineRepo } from "@/lib/repositories";
 
-export default function MedicinesPage() {
+function MedicinesPage() {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<Medicine[] | null>(null);
   const [edit, setEdit] = useState<Medicine | null>(null);
@@ -77,4 +78,8 @@ export default function MedicinesPage() {
       </Modal>
     </div>
   );
+}
+
+export default function GuardedMedicinesPage() {
+  return <RequirePermission permission="clinical:read"><MedicinesPage /></RequirePermission>;
 }

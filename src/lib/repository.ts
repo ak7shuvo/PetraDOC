@@ -24,6 +24,10 @@ export interface Repository<T extends BaseEntity> {
   count(where?: Partial<T>): Promise<number>;
   save(entity: T): Promise<T>;
   remove(id: string): Promise<void>;
+  /** Delete every record (used by restore). */
+  clear(): Promise<void>;
+  /** Insert as-is, keeping ids and timestamps (used by restore). */
+  importMany(entities: T[]): Promise<void>;
 }
 
 export const newId = (): string => crypto.randomUUID();
