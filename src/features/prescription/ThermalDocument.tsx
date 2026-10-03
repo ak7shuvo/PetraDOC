@@ -1,11 +1,12 @@
 import { patientAge } from "@/features/patients/types";
 import type { PrescriptionData } from "./PrescriptionDocument";
 
+const H = ({ children }: { children: React.ReactNode }) => <div className="mt-2 border-b border-black text-[10px] font-bold uppercase">{children}</div>;
+
 /** Compact text layout for 58mm / 80mm thermal paper. */
 export function ThermalDocument({ data, widthMm }: { data: PrescriptionData; widthMm: 58 | 80 }) {
   const { consultation: c, patient: p, doctor: d, chamber, footer } = data;
   const degrees = d.education.map((e) => e.degree).filter(Boolean).join(", ");
-  const H = ({ children }: { children: React.ReactNode }) => <div className="mt-2 border-b border-black text-[10px] font-bold uppercase">{children}</div>;
   return (
     <div id="rx-print" className="mx-auto bg-white p-1 text-[11px] leading-snug text-black" style={{ width: `${widthMm}mm` }}>
       <div className="text-center">
