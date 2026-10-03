@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button, Card, Input, PhotoField, Select, Textarea, useToast } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
+import { useLicense } from "@/features/licensing/LicenseProvider";
 import { savePatient, validatePatient, type PatientInput } from "./service";
 import { BLOOD_GROUPS, emptyPatient, GENDERS, type Patient } from "./types";
 
@@ -12,6 +13,7 @@ export function PatientForm({ patient }: { patient?: Patient }) {
   const [busy, setBusy] = useState(false);
   const router = useRouter();
   const toast = useToast();
+  const { loading } = useLicense();
   const canWrite = useCan("patient:write");
   const clinical = useCan("clinical:read");
 
@@ -36,6 +38,7 @@ export function PatientForm({ patient }: { patient?: Patient }) {
     }
   };
 
+  if (loading) return null;
   if (!canWrite) return <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning-fg">Editing is unavailable: your role or license does not allow it.</p>;
   return (
     <form onSubmit={submit} noValidate className="space-y-4">

@@ -1,23 +1,31 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useSyncExternalStore } from "react";
 import type { Role } from "@/types/roles";
 import { useLicense } from "@/features/licensing/LicenseProvider";
 import { can, isWritePermission, ROLE_LABELS, type Permission } from "./permissions";
 
 const KEY = "petradoc.activeRole";
+const listeners = new Set<() => void>();
+
+function subscribe(cb: () => void) {
+  listeners.add(cb);
+  const onStorage = (e: StorageEvent) => { if (e.key === KEY) cb(); };
+  window.addEventListener("storage", onStorage);
+  return () => { listeners.delete(cb); window.removeEventListener("storage", onStorage); };
+}
+/** Read synchronously so a non-Doctor role never briefly sees Doctor-level UI after load. */
+function getSnapshot(): Role {
+  try { const s = localStorage.getItem(KEY) as Role | null; return s && s in ROLE_LABELS ? s : "DOCTOR"; } catch { return "DOCTOR"; }
+}
+const getServerSnapshot = (): Role => "DOCTOR";
+
 const Ctx = createContext<{ role: Role; setRole: (r: Role) => void }>({ role: "DOCTOR", setRole: () => {} });
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRoleState] = useState<Role>("DOCTOR");
-  useEffect(() => {
-    try {
-      const s = localStorage.getItem(KEY) as Role | null;
-      if (s && s in ROLE_LABELS) setRoleState(s);
-    } catch {}
-  }, []);
+  const role = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const setRole = (r: Role) => {
-    setRoleState(r);
     try { localStorage.setItem(KEY, r); } catch {}
+    listeners.forEach((l) => l());
   };
   return <Ctx.Provider value={{ role, setRole }}>{children}</Ctx.Provider>;
 }

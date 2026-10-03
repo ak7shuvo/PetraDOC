@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { genData, ok, open, patient, run, seedViaBackup } from "./lib.mjs";
+import { genData, idbPut, ok, open, patient, run, seedViaBackup } from "./lib.mjs";
 
 const tmp = (n) => path.join(os.tmpdir(), n);
 
@@ -157,7 +157,7 @@ export const tests = {
     await patient(p, "Extra Person", "01999999999"); await p.goto(p.base + "/settings");
     const restore = async (file, pass) => {
       await p.goto(p.base + "/settings"); await p.getByLabel("Backup file").setInputFiles(file);
-      if (pass != null) { await p.getByLabel("Passphrase").last().fill(pass); await p.getByRole("button", { name: "Decrypt" }).click();
+      if (pass != null) { await p.locator("dialog[open]").getByLabel("Passphrase").fill(pass); await p.getByRole("button", { name: "Decrypt" }).click();
         await p.waitForFunction(() => document.querySelector("dialog[open] h2")?.textContent === "Restore backup?" || [...document.querySelectorAll("p[role=alert]")].some((e) => e.textContent), null, { timeout: 15000 }); }
     };
     await restore(tmp("e2e-enc.json"), "wrong passphrase");
@@ -277,7 +277,7 @@ export const tests = {
     ok("license: unsigned/unknown key never activates", !m.includes("activated") && (await p.getByText("ACTIVE", { exact: true }).count()) === 0, m);
     await p.evaluate(() => localStorage.setItem("petradoc.activeRole", "RECEPTIONIST")); await p.goto(p.base + "/"); await p.waitForTimeout(500);
     ok("roles: receptionist nav hides clinical", !(await p.locator("nav[aria-label=Primary] a").allInnerTexts()).includes("Consult"));
-    await p.goto(p.base + "/consultations"); ok("roles: receptionist blocked from consultations", (await p.getByText("does not have access").count()) === 1);
+    await p.goto(p.base + "/consultations"); await p.waitForTimeout(300); ok("roles: receptionist blocked from consultations", (await p.getByText("does not have access").count()) === 1);
     await p.goto(p.base + "/patients"); await p.getByText("Rahim Uddin").click(); await p.waitForTimeout(500);
     ok("roles: receptionist sees no medical history", (await p.getByText("Medical history").count()) === 0);
     await p.evaluate(() => localStorage.setItem("petradoc.activeRole", "ASSISTANT")); await p.reload(); await p.waitForTimeout(500);
@@ -399,6 +399,27 @@ export const tests = {
     await p.goto(p.base + "/patients/detail?id=p3"); await p.waitForTimeout(600);
     ok("indexes: timeline loads this patient's consultations only", (await p.locator("ol li").count()) >= 1 && !(await p.locator("ol").innerText()).includes("RX-000002"));
     await b.close();
+  },
+
+  async licenseStatesReadOnly() {
+    const states = [
+      ["expired trial", { id: "license", state: "TRIAL", trialStartedAt: new Date(Date.now() - 40 * 86400000).toISOString() }, /trial has ended/],
+      ["revoked license", { id: "license", state: "ACTIVE", signedPayload: "{}", signature: "AAAA", revokedAt: new Date().toISOString() }, /revoked/],
+      ["invalid license (cannot be verified)", { id: "license", state: "ACTIVE", signedPayload: "{}", signature: "AAAA" }, /Read-only/],
+    ];
+    for (const [label, rec, banner] of states) {
+      const { b, p } = await open();
+      await patient(p, "Existing Patient");
+      await idbPut(p, "licenses", rec); await p.goto(p.base + "/patients/new"); await p.waitForTimeout(700);
+      ok(`license: ${label} shows read-only banner`, banner.test(await p.getByRole("status").first().innerText()));
+      ok(`license: ${label} blocks creating patients`, (await p.getByText("Editing is unavailable").count()) === 1);
+      await p.goto(p.base + "/patients"); await p.waitForTimeout(400);
+      ok(`license: ${label} still shows existing data`, (await p.getByText("Existing Patient").count()) === 1);
+      await p.goto(p.base + "/settings"); await p.waitForTimeout(400);
+      const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 15000 }).catch(() => null), p.getByRole("button", { name: "Export unencrypted backup" }).click()]);
+      ok(`license: ${label} still allows backup export`, !!dl);
+      await b.close();
+    }
   },
 
   async mobileAndAllPagesLoad() {

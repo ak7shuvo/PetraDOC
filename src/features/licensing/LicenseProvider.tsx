@@ -2,8 +2,9 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { getLicenseStatus, startTrial, type LicenseStatus } from "./service";
 
-const Ctx = createContext<{ status: LicenseStatus | null; canWrite: boolean; refresh: () => Promise<void> }>({
-  status: null, canWrite: true, refresh: async () => {},
+// Fail closed: until the license status is known, writing is not allowed (UI shows nothing instead of flashing).
+const Ctx = createContext<{ status: LicenseStatus | null; loading: boolean; canWrite: boolean; refresh: () => Promise<void> }>({
+  status: null, loading: true, canWrite: false, refresh: async () => {},
 });
 export const useLicense = () => useContext(Ctx);
 
@@ -11,7 +12,7 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<LicenseStatus | null>(null);
   const refresh = useCallback(async () => setStatus(await getLicenseStatus()), []);
   useEffect(() => { refresh().catch(() => {}); }, [refresh]);
-  return <Ctx.Provider value={{ status, canWrite: status ? status.canWrite : true, refresh }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ status, loading: status === null, canWrite: status ? status.canWrite : false, refresh }}>{children}</Ctx.Provider>;
 }
 
 export function LicenseBanner() {

@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button, Card, Input, Select, Textarea, useToast } from "@/components/ui";
 import { useCan } from "@/features/auth/RoleProvider";
+import { useLicense } from "@/features/licensing/LicenseProvider";
 import { doctorLabel, listChambers, listDoctors } from "@/features/doctor-profile/service";
 import type { Chamber, DoctorProfile } from "@/features/doctor-profile/types";
 import { PatientPicker } from "@/features/patients/PatientPicker";
@@ -30,6 +31,7 @@ export function ConsultationForm({ initial }: { initial: Consultation }) {
   const [busy, setBusy] = useState(false);
   const router = useRouter();
   const toast = useToast();
+  const { loading } = useLicense();
   const canWrite = useCan("consultation:write");
 
   useEffect(() => { listDoctors().then(setDoctors); }, []);
@@ -54,6 +56,7 @@ export function ConsultationForm({ initial }: { initial: Consultation }) {
     } catch { toast("Could not save consultation", "error"); setBusy(false); }
   };
 
+  if (loading) return null;
   if (!canWrite) return <p className="rounded-lg bg-amber-50 p-3 text-sm text-warning-fg">Recording consultations is unavailable: your role or license does not allow it.</p>;
   return (
     <form onSubmit={submit} noValidate className="space-y-4">

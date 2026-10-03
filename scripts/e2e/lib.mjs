@@ -106,3 +106,17 @@ export function genData({ patients = 5, consultations = 8, appointmentsToday = 4
   const tests = [["CBC", "Haematology"], ["ESR", "Haematology"], ["Creatinine", "Biochemistry"]].map(([name, category], i) => ({ id: `tst${i}`, name, category, ...t }));
   return { doctors, chambers, patients: pts, consultations: cons, appointments: appts, medicines, tests, panels: [{ id: "pn1", name: "Fever", tests: ["CBC", "ESR"], ...t }], rxTemplates: [{ id: "tp1", name: "Fever template", items: [], ...t }] };
 }
+
+/** Test-only: write a record straight into IndexedDB (simulates state a future license server would set). */
+export async function idbPut(p, store, record) {
+  await p.evaluate(({ store, record }) => new Promise((resolve, reject) => {
+    const open = indexedDB.open("petradoc");
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const db = open.result, tx = db.transaction(store, "readwrite");
+      tx.objectStore(store).put(record);
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => reject(tx.error);
+    };
+  }), { store, record });
+}
