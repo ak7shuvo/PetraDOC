@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Badge, Card, EmptyState, linkButtonClass } from "@/components/ui";
+import { Card, EmptyState, linkButtonClass } from "@/components/ui";
+import { localDate } from "@/lib/date";
 import { appointmentRepo, consultationRepo, patientRepo } from "@/lib/repositories";
 import type { Consultation } from "@/features/consultation/types";
 import type { Patient } from "@/features/patients/types";
@@ -11,7 +12,7 @@ interface Stats {
   recent: (Consultation & { patientName: string })[];
 }
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => localDate();
 
 async function load(): Promise<Stats> {
   const t = todayStr();
@@ -21,7 +22,7 @@ async function load(): Promise<Stats> {
   const names = new Map<string, Patient>(patients.map((p) => [p.id, p]));
   return {
     patients: patients.length,
-    today: appts.filter((a) => a.date.slice(0, 10) === t && a.status === "scheduled").length,
+    today: appts.filter((a) => a.date === t && a.status !== "cancelled").length,
     followUps: consults.filter((c) => c.followUpDate && c.followUpDate >= t).length,
     recent: consults.slice(0, 5).map((c) => ({ ...c, patientName: names.get(c.patientId)?.name ?? "Unknown patient" })),
   };
@@ -51,20 +52,20 @@ export default function Dashboard() {
           <Link href="/patients/new" className={linkButtonClass()}>New patient</Link>
           <Link href="/patients" className={linkButtonClass("secondary")}>Find patient</Link>
           <Link href="/profile" className={linkButtonClass("secondary")}>Doctor profile</Link>
-          <Link href="/consultations" className={linkButtonClass("secondary")}>
-            New consultation <Badge>Phase 4</Badge>
-          </Link>
+          <Link href="/consultations/new" className={linkButtonClass("secondary")}>New consultation</Link>
         </div>
       </Card>
       <Card title="Recent consultations">
         {s && s.recent.length === 0 ? (
-          <EmptyState title="No consultations yet" hint="Consultations will appear here once recording is available (Phase 4)." />
+          <EmptyState title="No consultations yet" hint="Saved consultations appear here." />
         ) : (
           <ul className="divide-y divide-border">
             {s?.recent.map((c) => (
-              <li key={c.id} className="py-2 text-sm">
-                <span className="font-medium">{c.patientName}</span>{" "}
-                <span className="text-muted">· {c.date.slice(0, 10)} · {c.diagnosis || c.chiefComplaint}</span>
+              <li key={c.id}>
+                <Link href={`/prescriptions/view?id=${c.id}`} className="block min-h-[44px] py-2 text-sm">
+                  <span className="font-medium">{c.patientName}</span>{" "}
+                  <span className="text-muted">· {c.date} · {c.diagnosis || c.chiefComplaint}</span>
+                </Link>
               </li>
             ))}
           </ul>

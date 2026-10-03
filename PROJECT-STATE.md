@@ -1,7 +1,7 @@
 # PROJECT STATE
 
 ## Current phase
-Phases 1-3 complete. Phase 4 (Consultation + vitals) is next; not started.
+Phases 1-4 complete. Phase 5 (Medicines + prescription) is next.
 
 ## Completed
 - Scaffold verified: `npm install`, `npm run typecheck`, `npm run build` all pass.
@@ -14,6 +14,7 @@ Phases 1-3 complete. Phase 4 (Consultation + vitals) is next; not started.
 - Phase 2: Doctor Profile (personal, professional, unlimited education/training/experience), multiple Chambers (CRUD), live prescription header preview (profile + selected chamber), photo stored locally. Editing gated to Doctor/Admin roles (UI-only). Single local doctor record (id `primary`); multi-doctor deferred to Phase 7.
 
 - Phase 3: Patients. Create/edit, auto Patient ID (`PD-000001`, max+1), all master-prompt fields, local photo (resized JPEG data URL), search by name/mobile/ID, detail page with history timeline (empty until consultations exist). Pages: `/patients`, `/patients/new`, `/patients/edit?id=`, `/patients/detail?id=`.
+- Phase 4: Consultation (complaint, history, vitals incl. auto BMI, examination, diagnosis, advice, follow-up), auto Prescription ID (RX-000001), local-date handling, prescription view page (A4 document component), patient timeline links to visits. Full `Consultation` model and all Dexie tables (v2) defined up front.
 
 ## Remaining
 - Phases 4-10 per master prompt.

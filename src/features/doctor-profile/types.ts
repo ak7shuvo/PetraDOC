@@ -19,8 +19,8 @@ export interface Chamber extends BaseEntity {
 
 export const PRIMARY_DOCTOR_ID = "primary";
 
-export const emptyProfile = (): DoctorProfile => ({
-  id: PRIMARY_DOCTOR_ID, name: "", gender: "", phone: "", email: "", address: "",
+export const emptyProfile = (id: string = PRIMARY_DOCTOR_ID): DoctorProfile => ({
+  id, name: "", gender: "", phone: "", email: "", address: "",
   title: "", specialty: "", subSpecialty: "", bmdcNumber: "", experienceYears: "", position: "",
   department: "", expertise: "", languages: "", education: [], training: [], experience: [],
 });

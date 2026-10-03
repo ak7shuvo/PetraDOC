@@ -10,3 +10,5 @@ export const chamberRepo = new DexieRepository<Chamber>("chambers", (c) => c.nam
 export const patientRepo = new DexieRepository<Patient>("patients", (p) => `${p.name} ${p.mobile} ${p.code}`);
 export const consultationRepo = new DexieRepository<Consultation>("consultations");
 export const appointmentRepo = new DexieRepository<Appointment>("appointments");
+import type { AppSettings } from "@/features/settings/types";
+export const settingsRepo = new DexieRepository<AppSettings>("settings");

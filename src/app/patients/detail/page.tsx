@@ -17,6 +17,7 @@ function Inner() {
   const [p, setP] = useState<Patient | null | undefined>(undefined);
   const [history, setHistory] = useState<Consultation[]>([]);
   const canWrite = useCan("patient:write");
+  const canConsult = useCan("consultation:write");
 
   useEffect(() => {
     if (!id) return setP(null);
@@ -37,7 +38,10 @@ function Inner() {
             <div className="text-sm text-muted">{[p.code, patientAge(p), p.gender, p.bloodGroup].filter(Boolean).join(" · ")}</div>
             {p.allergies && <div className="mt-1"><Badge tone="danger">Allergies: {p.allergies}</Badge></div>}
           </div>
-          {canWrite && <Link href={`/patients/edit?id=${p.id}`} className={linkButtonClass("secondary")}>Edit</Link>}
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {canConsult && <Link href={`/consultations/new?patientId=${p.id}`} className={linkButtonClass()}>New consultation</Link>}
+            {canWrite && <Link href={`/patients/edit?id=${p.id}`} className={linkButtonClass("secondary")}>Edit</Link>}
+          </div>
         </div>
       </Card>
       <Card title="Details">
@@ -50,13 +54,13 @@ function Inner() {
       </Card>
       <Card title="History timeline">
         {history.length === 0 ? (
-          <EmptyState title="No consultations yet" hint="Visits will appear here once consultations are recorded (Phase 4)." />
+          <EmptyState title="No consultations yet" hint="Visits appear here once consultations are recorded." />
         ) : (
           <ol className="space-y-3 border-l-2 border-border pl-4">
             {history.map((c) => (
               <li key={c.id}>
-                <div className="text-xs text-muted">{c.date.slice(0, 10)}</div>
-                <div className="text-sm font-medium">{c.diagnosis || c.chiefComplaint || "Consultation"}</div>
+                <div className="text-xs text-muted">{c.date}{c.rxCode && ` · ${c.rxCode}`}</div>
+                <Link href={`/prescriptions/view?id=${c.id}`} className="text-sm font-medium text-primary underline">{c.diagnosis || c.chiefComplaint || "Consultation"}</Link>
                 {c.followUpDate && <div className="text-xs text-muted">Follow-up: {c.followUpDate}</div>}
               </li>
             ))}
