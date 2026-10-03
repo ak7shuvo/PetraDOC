@@ -5,6 +5,8 @@
 | 2026-10-03 | 0 | npm install / typecheck / build on scaffold | PASS |
 | 2026-10-03 | 1 | typecheck, build | PASS |
 | 2026-10-03 | 1 | Manual browser test | NOT RUN (no browser walkthrough yet) |
+| 2026-10-03 | 2 | typecheck, build | PASS |
+| 2026-10-03 | 2 | Manual browser test of profile/chambers | NOT RUN |
 
 ## Known issues
 - Role gating is UI-only; no authentication (by design until real auth exists).

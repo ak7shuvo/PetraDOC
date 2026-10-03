@@ -1,7 +1,7 @@
 # PROJECT STATE
 
 ## Current phase
-Phase 1 complete (foundation, UI kit, shell, dashboard). Phases 2-3 in progress this session.
+Phases 1-2 complete. Phase 3 in progress this session.
 
 ## Completed
 - Scaffold verified: `npm install`, `npm run typecheck`, `npm run build` all pass.
@@ -10,6 +10,8 @@ Phase 1 complete (foundation, UI kit, shell, dashboard). Phases 2-3 in progress 
 - UI kit (src/components/ui): Button, Input, Select, Textarea, Card, Modal (native `<dialog>`), Badge, EmptyState, Toast.
 - Responsive shell: sidebar (desktop), bottom nav + "More" (mobile), 44px targets.
 - Dashboard: real counts from repositories, recent consultations, quick actions, empty states.
+
+- Phase 2: Doctor Profile (personal, professional, unlimited education/training/experience), multiple Chambers (CRUD), live prescription header preview (profile + selected chamber), photo stored locally. Editing gated to Doctor/Admin roles (UI-only). Single local doctor record (id `primary`); multi-doctor deferred to Phase 7.
 
 ## Remaining
 - Phase 2 (Doctor Profile + Chambers), Phase 3 (Patients), then Phases 4-10 per master prompt.
