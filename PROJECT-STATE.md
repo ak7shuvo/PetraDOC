@@ -1,7 +1,7 @@
 # PROJECT STATE
 
 ## Current phase
-Phases 1-7 complete. Phase 8 (PDF, A4 print, thermal architecture) is next.
+Phases 1-8 complete. Phase 9 (backup/restore, licensing, security) is next.
 
 ## Completed
 - Scaffold verified: `npm install`, `npm run typecheck`, `npm run build` all pass.
@@ -18,6 +18,7 @@ Phases 1-7 complete. Phase 8 (PDF, A4 print, thermal architecture) is next.
 - Phase 5: Medicine database (generic/brand/strength/form/route/manufacturer, favourites; empty by default, nothing pre-seeded), prescription editor in consultations (search DB, favourites, manual entry, templates, 'Use previous prescription as new'), prescriptions list, prescription footer setting.
 - Phase 6: Investigation database with categories, custom panels, ordering in consultations (search, panel, manual entry, notes), shown on prescription. Empty by default.
 - Phase 7: Appointments with per-doctor/chamber/day token, queue statuses (scheduled → waiting → in consultation → done / cancelled), start-consultation from queue (auto-marks done on save), follow-up tracking (overdue/upcoming, book from follow-up), multiple doctors (profile switcher, per-doctor chambers, doctor filter on dashboard/queue), dashboard counts and patient timeline now include appointments and consultations. Doctors cannot yet be deleted.
+- Phase 8: Prescription output: A4 browser print (print CSS hides app chrome), real PDF download, 58mm/80mm thermal layouts, `PrinterAdapter` seam with a real BrowserPrinterAdapter and explicitly-unavailable Bluetooth/USB/LAN adapters (documented in docs/NATIVE-INTEGRATION.md). Dependencies added: `jspdf` + `html2canvas` (both dynamically imported only on 'Download PDF'): needed to produce a real PDF file in-browser that renders Bengali/any web font correctly; the alternative (vector PDF libraries) requires bundling and shaping Bengali fonts manually.
 
 ## Remaining
 - Phases 4-10 per master prompt.
@@ -28,6 +29,8 @@ Phases 1-7 complete. Phase 8 (PDF, A4 print, thermal architecture) is next.
 
 - Patient delete is intentionally not implemented (no requirement; avoids orphaned history). Patient ID uses max+1 locally; will need revisiting for multi-device sync.
 - Patient photos are stored inside IndexedDB records; included in future backups.
+
+- PDF is raster (html2canvas image inside jsPDF): text is not selectable, and an A4 prescription longer than one page is split at a fixed height (may cut a line). Typical one-page prescriptions are fine.
 
 ## Architecture decisions
 - Web-first Dexie storage; prisma/schema.prisma kept as future server target, NOT wired.

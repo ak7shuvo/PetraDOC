@@ -20,7 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <RoleProvider>
       <ToastProvider>
         <div className="min-h-screen md:flex">
-          <aside className="hidden w-60 shrink-0 flex-col gap-4 border-r border-border bg-surface p-4 md:flex">
+          <aside className="hidden print:!hidden w-60 shrink-0 flex-col gap-4 border-r border-border bg-surface p-4 md:flex">
             <div className="font-display text-xl font-bold text-primary">PetraDOC</div>
             <nav aria-label="Main" className="flex flex-1 flex-col gap-1">
               {NAV_ITEMS.map((i) => (
@@ -32,15 +32,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <RoleSelector />
           </aside>
           <div className="min-w-0 flex-1">
-            <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-2 md:hidden">
+            <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-2 md:hidden print:hidden">
               <span className="font-display text-lg font-bold text-primary">PetraDOC</span>
               <button onClick={() => setMore(true)} className="min-h-[44px] rounded-lg px-3 text-sm text-primary">
                 More
               </button>
             </header>
-            <main className="mx-auto max-w-5xl p-4 pb-24 md:p-8 md:pb-8">{children}</main>
+            <main className="mx-auto max-w-5xl p-4 pb-24 md:p-8 md:pb-8 print:max-w-none print:p-0">{children}</main>
           </div>
-          <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-10 flex border-t border-border bg-surface md:hidden">
+          <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-10 flex border-t border-border bg-surface md:hidden print:hidden">
             {primary.map((i) => (
               <Link key={i.href} href={i.href} aria-current={active(path, i.href) ? "page" : undefined}
                 className={`flex min-h-[56px] flex-1 items-center justify-center text-xs ${active(path, i.href) ? "font-semibold text-primary" : "text-muted"}`}>

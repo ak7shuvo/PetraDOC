@@ -16,6 +16,9 @@
 | 2026-10-03 | 6 | Headless smoke: add tests+category grouping, panel, order panel+search+manual in consultation, appear on Rx | PASS |
 | 2026-10-03 | 7 | typecheck, build | PASS |
 | 2026-10-03 | 7 | Headless smoke: 2 doctors, 2 bookings (tokens 1,2), check-in, start consultation → appointment Done, overdue follow-up listed then booked (token 3), dashboard counts, patient timeline | PASS |
+| 2026-10-03 | 8 | typecheck, build | PASS |
+| 2026-10-03 | 8 | Headless smoke: PDF download (A4 + thermal 80, valid %PDF), thermal width 302px (80mm), print media hides nav/toolbar, PDF page visually inspected | PASS |
+| 2026-10-03 | 8 | Real printers (A4/thermal via OS drivers), PDF in Acrobat/phone viewers | NOT RUN |
 | 2026-10-03 | 1-3 | Real-device touch/keyboard/a11y review, photo upload via file picker, Android/iOS browsers | NOT RUN |
 
 ## Known issues

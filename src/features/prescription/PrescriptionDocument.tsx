@@ -2,6 +2,8 @@ import type { Consultation } from "@/features/consultation/types";
 import { PrescriptionHeaderPreview } from "@/features/doctor-profile/PrescriptionHeaderPreview";
 import type { Chamber, DoctorProfile } from "@/features/doctor-profile/types";
 import { patientAge, type Patient } from "@/features/patients/types";
+import type { PrintTarget } from "@/features/printing/types";
+import { ThermalDocument } from "./ThermalDocument";
 
 export interface PrescriptionData {
   consultation: Consultation; patient: Patient; doctor: DoctorProfile; chamber?: Chamber; footer: string;
@@ -17,7 +19,9 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 );
 
 /** Printable A4 prescription. The element with id="rx-print" is what print/PDF captures. */
-export function PrescriptionDocument({ data }: { data: PrescriptionData }) {
+export function PrescriptionDocument({ data, layout = "A4" }: { data: PrescriptionData; layout?: PrintTarget }) {
+  if (layout === "THERMAL_58") return <ThermalDocument data={data} widthMm={58} />;
+  if (layout === "THERMAL_80") return <ThermalDocument data={data} widthMm={80} />;
   const { consultation: c, patient: p, doctor, chamber, footer } = data;
   const vitals = V_LABEL.filter(([k]) => c.vitals[k]).map(([k, l]) => `${l}: ${c.vitals[k]}`).join("  ·  ");
   return (
@@ -37,19 +41,22 @@ export function PrescriptionDocument({ data }: { data: PrescriptionData }) {
       {c.diagnosis && <Section title="Diagnosis"><p className="whitespace-pre-line">{c.diagnosis}</p></Section>}
       {c.medicines.length > 0 && (
         <Section title="℞ Medicines">
-          <ol className="list-decimal space-y-1 pl-5">
-            {c.medicines.map((m) => (
-              <li key={m.id}>
-                <b>{m.name}</b> {m.strength}
-                <div className="text-xs">{[m.dose, m.frequency, m.route, m.duration].filter(Boolean).join(" · ")}{m.instructions && ` — ${m.instructions}`}</div>
-              </li>
+          <div className="mt-1 space-y-1">
+            {c.medicines.map((m, i) => (
+              <div key={m.id} className="flex gap-2">
+                <span className="w-5 shrink-0 text-right">{i + 1}.</span>
+                <div>
+                  <b>{m.name}</b> {m.strength}
+                  <div className="text-xs">{[m.dose, m.frequency, m.route, m.duration].filter(Boolean).join(" · ")}{m.instructions && ` — ${m.instructions}`}</div>
+                </div>
+              </div>
             ))}
-          </ol>
+          </div>
         </Section>
       )}
       {c.investigations.length > 0 && (
         <Section title="Investigations">
-          <ul className="list-disc pl-5">{c.investigations.map((t) => <li key={t.id}>{t.name}{t.notes && ` (${t.notes})`}</li>)}</ul>
+          <div className="mt-1">{c.investigations.map((t) => <div key={t.id}>• {t.name}{t.notes && ` (${t.notes})`}</div>)}</div>
         </Section>
       )}
       {c.advice && <Section title="Advice"><p className="whitespace-pre-line">{c.advice}</p></Section>}
