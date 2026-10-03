@@ -14,8 +14,8 @@ const V_LABEL: [keyof Consultation["vitals"], string][] = [
   ["weight", "Wt"], ["height", "Ht"], ["bmi", "BMI"],
 ];
 
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <section className="mt-3"><h3 className="text-xs font-semibold uppercase tracking-wide text-primary-dark">{title}</h3>{children}</section>
+const Section = ({ title, children, split }: { title: string; children: React.ReactNode; split?: boolean }) => (
+  <section className={`mt-3 ${split ? "" : "break-inside-avoid"}`}><h3 className="text-xs font-semibold uppercase tracking-wide text-primary-dark">{title}</h3>{children}</section>
 );
 
 /** Printable A4 prescription. The element with id="rx-print" is what print/PDF captures. */
@@ -26,7 +26,7 @@ export function PrescriptionDocument({ data, layout = "A4" }: { data: Prescripti
   const vitals = V_LABEL.filter(([k]) => c.vitals[k]).map(([k, l]) => `${l}: ${c.vitals[k]}`).join("  ·  ");
   return (
     <div id="rx-print" className="rx-a4 mx-auto w-full max-w-[794px] bg-white p-6 text-sm text-black">
-      <PrescriptionHeaderPreview profile={doctor} chamber={chamber} />
+      <div><PrescriptionHeaderPreview profile={doctor} chamber={chamber} /></div>
       <div className="mt-3 flex flex-wrap justify-between gap-2 border-b border-border pb-2 text-xs">
         <div>
           <div><b>{p.name}</b> · {[patientAge(p), p.gender].filter(Boolean).join(", ")}</div>
@@ -40,10 +40,10 @@ export function PrescriptionDocument({ data, layout = "A4" }: { data: Prescripti
       {c.examination && <Section title="Examination"><p className="whitespace-pre-line">{c.examination}</p></Section>}
       {c.diagnosis && <Section title="Diagnosis"><p className="whitespace-pre-line">{c.diagnosis}</p></Section>}
       {c.medicines.length > 0 && (
-        <Section title="℞ Medicines">
+        <Section title="℞ Medicines" split>
           <div className="mt-1 space-y-1">
             {c.medicines.map((m, i) => (
-              <div key={m.id} className="flex gap-2">
+              <div key={m.id} className="flex gap-2 break-inside-avoid">
                 <span className="w-5 shrink-0 text-right">{i + 1}.</span>
                 <div>
                   <b>{m.name}</b> {m.strength}
@@ -63,7 +63,7 @@ export function PrescriptionDocument({ data, layout = "A4" }: { data: Prescripti
       {(c.followUpDate || c.followUpNotes) && (
         <Section title="Follow-up"><p>{[c.followUpDate, c.followUpNotes].filter(Boolean).join(" — ")}</p></Section>
       )}
-      <div className="mt-10 flex justify-end">
+      <div className="mt-10 flex justify-end break-inside-avoid">
         <div className="w-48 border-t border-black pt-1 text-center text-xs">{[doctor.title, doctor.name].filter(Boolean).join(" ")}<br />Signature</div>
       </div>
       {footer && <p className="mt-4 whitespace-pre-line border-t border-border pt-2 text-center text-xs text-muted">{footer}</p>}
