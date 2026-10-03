@@ -7,14 +7,14 @@ import type { Role } from "@/types/roles";
 export type Permission =
   | "patient:read" | "patient:write"
   | "profile:edit"
-  | "consultation:write" | "medicine:write"
+  | "consultation:write" | "medicine:write" | "investigation:write"
   | "settings:manage";
 
 const MATRIX: Record<Role, Permission[]> = {
-  DOCTOR: ["patient:read", "patient:write", "profile:edit", "consultation:write", "medicine:write"],
+  DOCTOR: ["patient:read", "patient:write", "profile:edit", "consultation:write", "medicine:write", "investigation:write"],
   RECEPTIONIST: ["patient:read", "patient:write"],
   ASSISTANT: ["patient:read", "patient:write"],
-  ADMIN: ["patient:read", "patient:write", "profile:edit", "medicine:write", "settings:manage"],
+  ADMIN: ["patient:read", "patient:write", "profile:edit", "medicine:write", "investigation:write", "settings:manage"],
 };
 
 export const can = (role: Role, p: Permission) => MATRIX[role].includes(p);

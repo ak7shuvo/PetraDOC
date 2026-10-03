@@ -6,6 +6,7 @@ import { useCan } from "@/features/auth/RoleProvider";
 import { listChambers } from "@/features/doctor-profile/service";
 import type { Chamber } from "@/features/doctor-profile/types";
 import { PatientPicker } from "@/features/patients/PatientPicker";
+import { InvestigationEditor } from "./InvestigationEditor";
 import { PrescriptionEditor } from "./PrescriptionEditor";
 import { saveConsultation, validateConsultation } from "./service";
 import type { Consultation, Vitals } from "./types";
@@ -86,6 +87,7 @@ export function ConsultationForm({ initial }: { initial: Consultation }) {
         <div className="space-y-3">{area("examination", "Examination")}{area("diagnosis", "Diagnosis / clinical impression")}</div>
       </Card>
       <PrescriptionEditor items={c.medicines} onChange={(v) => set("medicines", v)} patientId={c.patientId} currentId={c.id} />
+      <InvestigationEditor items={c.investigations} onChange={(v) => set("investigations", v)} />
       <Card title="Advice & follow-up">
         <div className="space-y-3">
           {area("advice", "Advice")}

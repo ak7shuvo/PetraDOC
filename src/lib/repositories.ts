@@ -15,3 +15,6 @@ export const settingsRepo = new DexieRepository<AppSettings>("settings");
 import type { Medicine, RxTemplate } from "@/features/medicines/types";
 export const medicineRepo = new DexieRepository<Medicine>("medicines", (m) => `${m.generic} ${m.brand} ${m.manufacturer}`);
 export const rxTemplateRepo = new DexieRepository<RxTemplate>("rxTemplates", (t) => t.name);
+import type { Panel, TestDef } from "@/features/investigations/types";
+export const testRepo = new DexieRepository<TestDef>("tests", (t) => `${t.name} ${t.category}`);
+export const panelRepo = new DexieRepository<Panel>("panels", (p) => p.name);
