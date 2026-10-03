@@ -1,48 +1,41 @@
 # PROJECT STATE
 
 ## Current phase
-Phases 1-10 complete (this session). Project is runnable and feature-complete against `docs/MASTER-PROMPT.md` for the web app. Next work: real authentication/server sync, native builds (Capacitor/Tauri), dependency major upgrades, device/accessibility testing.
+All planned phases (1-10) and the "final" hardening tasks (1-8) are complete. The web app is feature-complete against `docs/MASTER-PROMPT.md`. What remains is real-world verification (phone, printer, screen reader) and the future native/server work listed below.
 
 ## Completed
-- Phase 1: Dexie `Repository<T>` storage (no server needed), UI kit (Button, Input, Select, Textarea, Card, Modal, Badge, EmptyState, Toast), responsive shell, dashboard with real counts, role helper.
-- Phase 2: Doctor profile (unlimited education/training/experience), multiple chambers, live prescription header preview.
-- Phase 3: Patients (auto ID, all fields, local photo, search by name/mobile/ID, detail + timeline).
-- Phase 4: Consultation (complaint, history, vitals with BMI, examination, diagnosis, advice, follow-up), auto Rx ID.
-- Phase 5: Medicine database (+favourites), prescription editor (search, manual, templates, "use previous prescription as new"), prescriptions list, footer setting.
-- Phase 6: Investigation database, categories, custom panels, ordering in consultations.
-- Phase 7: Appointments with tokens/queue, follow-up tracking/booking, multiple doctors + per-doctor chambers, dashboard/timeline wiring.
-- Phase 8: A4 print, PDF download, 58/80 mm thermal layouts, `PrinterAdapter` (browser adapter real; Bluetooth/USB/LAN explicitly unavailable).
-- Phase 9: Backup/restore (JSON file), licensing (signed-key verification, trial, states, read-only enforcement), role/permission matrix with clinical-data separation.
-- Phase 10: Patient delete (cascades to consultations/appointments, confirmation), browser-only-data warnings, ESLint config, npm audit triage, README.
+- **Phases 1-10** (foundation, doctor profile + chambers, patients, consultation + vitals, medicines + prescription, investigations, appointments/queue/follow-ups/multiple doctors, PDF/print/thermal seam, backup/licensing/roles, patient delete + docs).
+- **Final 1: PDF.** Long prescriptions flow onto multiple A4 pages (cuts at blank gaps between entries, fixed 794px layout width regardless of screen). PDF stays raster: selectable text was evaluated and rejected (would need a second text layout engine + embedded Bengali font; documented).
+- **Final 2: data safety.** `navigator.storage.persist()` requested at start with a visible status/usage in Settings; passphrase-encrypted backups (PBKDF2-SHA256 310k iterations, AES-256-GCM) with wrong-passphrase / corrupted / truncated detection; unencrypted export kept with a warning; dashboard reminder when no backup in 7 days.
+- **Final 3: missing features.** Doctor delete (blocked with explanations when consultations/appointments exist or it is the last doctor); CSV/JSON import for medicines and tests (preview, duplicate skip/update, invalid-row report, sample download); opt-in starter lists labelled "Starter list, verify before use" (generic names only, no strengths/doses).
+- **Final 4: mobile.** Web app manifest + icons (`scripts/make-icons.mjs`), no service worker, safe-area padding; all tap targets >= 44px at 360/390px on 13 pages; correct `type`/`inputmode`; no horizontal scroll.
+- **Final 5: accessibility.** axe-core (WCAG 2 A/AA + best-practice) on 15 pages at 390 and 1280px plus an open dialog: no serious/critical issues. Fixed colour contrast with text-safe status colours (`*-fg` tokens) and a slightly darker `muted` than the brand spec (#5A6B82 vs #64748B, documented in `tailwind.config.ts`); added a skip link; native `<dialog>` keeps focus off the page behind it and restores it on close.
+- **Final 6: scale.** Indexed/ordered Dexie queries (`where` uses indexes, `orderBy` cursors, schema v3 adds `consultations.followUpDate`), paginated lists (50 + "Show more"). At 2,000 patients / 5,000 consultations: all measured screens 79-280 ms (was up to 936 ms), 50 DOM rows instead of 2,000. Firefox/WebKit could not be installed (egress blocked).
+- **Final 7: dependencies.** Next 14 -> 16.3.8, React 18 -> 19, ESLint 8 -> 9 (flat config; `next lint` no longer exists). `npm audit --omit=dev`: 0 vulnerabilities. Also hardened: role is read synchronously (no wrong-role flash) and writes are disallowed until the license status is known (was fail-open).
+- **Final 8: docs.** README, this file, AUDIT.md, the three `docs/` build/integration files, and `docs/USER-GUIDE.md`.
 
-## Remaining / future
-- Real authentication + server-side enforcement; PostgreSQL/Prisma wiring and sync; SQLite for native.
-- Capacitor/Tauri builds, native thermal printing (Bluetooth/USB), Google Drive backup destination, license server + revocation feed.
-- Upgrade Next 14 → current and Tailwind 3 → 4 (clears audit advisories).
-- Doctor delete, bulk import of medicines/tests, encrypted backups, selectable-text PDF.
+## Not done / future
+- Real authentication and server-side enforcement; PostgreSQL/Prisma wiring and multi-device sync; SQLite for native.
+- Capacitor/Tauri builds, native thermal printing (Bluetooth/USB), Google Drive destination, license server + revocation feed.
+- Tailwind 3 -> 4 (only dev-time audit advisories remain; needs config/CSS rewrite and visual checks).
+- Selectable-text PDF; service worker/offline shell; encrypted storage at rest.
+- Test on a real phone, real printers (A4 + thermal), a screen reader, Firefox and Safari.
 
 ## Known issues
-- Data is only in the browser's IndexedDB (unencrypted). Backups are unencrypted JSON.
-- No authentication; role gating is UI-only, not a security boundary.
-- Licensing is client-side; the trial is local and resettable; no revocation source exists.
-- PDF is raster; long A4 prescriptions are split at a fixed page height (can cut a line).
-- Patient ID / Rx ID / token use max+1 locally: will need rework for multi-device sync.
-- Restore is not atomic across tables (input is validated first).
-- `npm audit`: 10 advisories (9 high, 1 critical), all require major upgrades (see AUDIT.md).
-- Not tested: real phones/tablets, screen readers, real printers, Safari/Firefox, large datasets (search is in-memory).
+See `AUDIT.md` > KNOWN LIMITS. Main ones: browser-local data (backup is the only safety net), no authentication (roles are UI-only), client-side-only licensing with a local resettable trial, raster PDFs, `react-hooks/set-state-in-effect` lint rule downgraded to a warning (14 warnings).
 
 ## Architecture decisions
 - Web-first Dexie storage behind `Repository<T>`; `src/lib/repositories.ts` is the only place storage is obtained. `prisma/schema.prisma` is a future target, not wired.
-- Features in `src/features/*`; native seams: `PrinterAdapter`, `BackupDestination`, `PlatformCapabilities`.
-- Detail/edit pages use query params (`/patients/detail?id=`) for static-export (Capacitor/Tauri) compatibility.
-- Consultation embeds medicines and ordered tests; the prescription is a rendering of a consultation (Rx ID = `rxCode`).
-- Licensing is isolated from the Doctor Profile and verifies ECDSA P-256 signatures against a build-time public key; no hardcoded key.
+- Features in `src/features/*`; native seams: `PrinterAdapter`, `BackupDestination`, `PlatformCapabilities`, `LicenseRepository/Validator`.
+- Query-string routes (`/patients/detail?id=`) for static-export compatibility.
+- Consultation embeds medicines and ordered tests; a prescription is a rendering of a consultation (Rx ID = `rxCode`).
+- Licensing isolated from the Doctor Profile; ECDSA P-256 signatures against a build-time public key; no hardcoded key. Writes require TRIAL/ACTIVE; reads and backup export always work.
+- No service worker (stale-cache risk); PWA manifest only.
+- Brand colour tokens kept for fills; text uses AA-safe variants.
 - BMDC number and qualifications are user-provided, not verified (labelled in the UI).
 
-## Dependencies added (and why)
-- `dexie`: IndexedDB wrapper for the local-first repository implementation.
-- `jspdf` + `html2canvas`: generate a real PDF file in-browser that renders Bengali/any web font correctly (dynamically imported only on "Download PDF"). Vector PDF libraries would need Bengali fonts bundled and shaped manually.
-- No form/validation library: validation is small hand-written functions.
+## Dependencies (and why)
+Runtime: `next`, `react`, `react-dom`; `dexie` (IndexedDB repository); `jspdf` + `html2canvas` (real PDF files that render Bengali correctly, loaded only on "Download PDF"). Dev only: `tailwindcss`/`postcss`/`autoprefixer`, `eslint` + `eslint-config-next`, `typescript`, `playwright-core` (e2e/a11y/perf/icons scripts), `axe-core` (accessibility script), `prisma` (future server schema). No form/validation library: validation is small hand-written functions.
 
 ## How to run
-`npm install && npm run dev` (http://localhost:3000); `npm run build`; `npm run typecheck`; `npm run lint`.
+`npm install && npm run dev` (http://localhost:3000); `npm run build`; `npm run typecheck`; `npm run lint`; dev-only: `npm run e2e`, `npm run e2e:license`, `npm run a11y`, `npm run perf` (see README).
